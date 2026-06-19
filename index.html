@@ -98,7 +98,23 @@ section{padding:8rem 3rem;position:relative}
 .tl-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
 .tl-label{font-family:var(--font-m);font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--t2)}
 .tl-time{font-family:var(--font-m);font-size:1rem;color:var(--c0)}
-input[type=range].tl-slider{width:100%;height:2px;-webkit-appearance:none;background:linear-gradient(90deg,var(--c0) var(--p,35%),rgba(255,255,255,.08) var(--p,35%));border-radius:2px;outline:none;cursor:pointer}
+input[type=range].tl-slider{
+    width:100%;
+    height:2px;
+
+    appearance: none;
+    -webkit-appearance: none;
+
+    background: linear-gradient(
+        90deg,
+        var(--c0) var(--p,35%),
+        rgba(255,255,255,.08) var(--p,35%)
+    );
+
+    border-radius:2px;
+    outline:none;
+    cursor:pointer;
+}
 input[type=range].tl-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:var(--bg);border:2px solid var(--c0);border-radius:50%;cursor:pointer;transition:transform .15s}
 input[type=range].tl-slider::-webkit-slider-thumb:hover{transform:scale(1.3)}
 .tl-marks{display:flex;justify-content:space-between;margin-top:8px;font-family:var(--font-m);font-size:0.62rem;color:var(--t2)}
