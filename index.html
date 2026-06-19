@@ -50,27 +50,14 @@ body:hover #cursor{opacity:1}
 .live-dot{width:5px;height:5px;background:var(--c2);border-radius:50%;animation:livePulse 2s infinite}
 @keyframes livePulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(0,255,136,.4)}50%{opacity:.7;box-shadow:0 0 0 5px rgba(0,255,136,0)}}
 
+
+
 /* HERO */
-#hero{
-    min-height:100vh;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    position:relative;
-    overflow:hidden;
-    padding:120px 0 80px;
-}
+#hero{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden}
 #hero-canvas{position:absolute;inset:0;z-index:0}
-.hero-inner{
-    position:relative;
-    z-index:2;
-    max-width:900px;
-    margin:0 auto;
-    padding-top:40px;
-}
-.hero-chip{display:inline-flex;align-items:center;gap:8px;background:rgba(0,212,255,0.06);border:0.5px solid rgba(0,212,255,0.2);padding:6px 16px;border-radius:100px;font-size:0.7rem;font-family:var(--font-m);color:var(--c0);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:2.5rem;opacity:0;animation:fadeUp .8s .3s forwards}
-.hero-title{font-family:var(--font-d);font-size:clamp(3.5rem,8vw,7rem);font-weight:300;line-height:0.95;letter-spacing:-0.05em;margin-bottom:1.5rem;opacity:0;animation:fadeUp .8s .5s forwards}
+.hero-inner{position:relative;z-index:2;text-align:center;max-width:860px;padding:0 2rem;transform:translateY(-25px);}
+.hero-chip{display:inline-flex;align-items:center;gap:8px;background:rgba(0,212,255,0.06);border:0.5px solid rgba(0,212,255,0.2);padding:6px 16px;border-radius:100px;font-size:0.7rem;font-family:var(--font-m);color:var(--c0);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:2rem;margin-top:25px;opacity:0;animation:fadeUp .8s .3s forwards}
+.hero-title{font-family:var(--font-d);font-size:clamp(3.3rem,7.5vw,6.5rem);font-weight:300;line-height:0.95;letter-spacing:-0.05em;margin-bottom:1.5rem;opacity:0;animation:fadeUp .8s .5s forwards}
 .hero-title strong{font-weight:700;background:linear-gradient(135deg,#00d4ff 0%,#7c3aed 50%,#ff3366 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .hero-sub{font-size:1rem;color:var(--t1);line-height:1.7;max-width:520px;margin:0 auto 3rem;font-weight:300;opacity:0;animation:fadeUp .8s .7s forwards}
 .hero-ctas{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;opacity:0;animation:fadeUp .8s .9s forwards}
@@ -78,13 +65,7 @@ body:hover #cursor{opacity:1}
 .cta-primary:hover{background:#33ddff;transform:translateY(-2px);box-shadow:0 16px 40px rgba(0,212,255,0.25)}
 .cta-outline{background:transparent;color:var(--t0);padding:14px 32px;border-radius:100px;font-weight:400;font-size:0.88rem;border:0.5px solid rgba(255,255,255,0.15);cursor:pointer;transition:all .2s;text-decoration:none;display:inline-flex;align-items:center;gap:8px;letter-spacing:0.01em}
 .cta-outline:hover{border-color:rgba(0,212,255,0.4);color:var(--c0)}
-.hero-metrics{
-    display:flex;
-    justify-content:center;
-    gap:0;
-    padding:0 2rem;
-    margin-top:70px;
-}
+.hero-metrics{position:absolute;bottom:0;left:0;right:0;z-index:2;display:flex;justify-content:center;gap:0;padding:0 3rem 3rem}
 .h-metric{flex:1;max-width:200px;text-align:center;padding:1.5rem}
 .h-metric-n{font-family:var(--font-d);font-size:2rem;font-weight:700;background:linear-gradient(135deg,var(--c0),var(--c1));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
 .h-metric-l{font-size:0.68rem;color:var(--t2);text-transform:uppercase;letter-spacing:0.1em;margin-top:6px}
