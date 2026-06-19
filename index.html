@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrafficVerse AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#03080f;--bg2:#060e1a;--bg3:#0a1628;
+--c0:#00d4ff;--c1:#7c3aed;--c2:#00ff88;--c3:#ff3366;--c4:#ffaa00;
+--t0:#f0f6ff;--t1:#94afc8;--t2:#3d5878;
+--border:rgba(0,180,255,0.08);--border2:rgba(0,180,255,0.15);
+--glass:rgba(6,14,26,0.72);
+--font-d:'Space Grotesk',sans-serif;
+--font-b:'Inter',sans-serif;
+--font-m:'JetBrains Mono',monospace;
+}
+html{scroll-behavior:smooth;cursor:none}
+body{background:var(--bg);color:var(--t0);font-family:var(--font-b);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+/* Custom cursor */
+#cursor{position:fixed;width:10px;height:10px;background:var(--c0);border-radius:50%;pointer-events:none;z-index:99999;transform:translate(-50%,-50%);transition:width .15s,height .15s,opacity .15s;mix-blend-mode:screen}
+#cursor-ring{position:fixed;width:36px;height:36px;border:1px solid rgba(0,212,255,0.4);border-radius:50%;pointer-events:none;z-index:99998;transform:translate(-50%,-50%);transition:transform .12s,width .2s,height .2s,border-color .2s}
+body:hover #cursor{opacity:1}
+
+/* Loading screen */
+#loader{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2rem;transition:opacity .8s,visibility .8s}
+#loader.done{opacity:0;visibility:hidden}
+.loader-logo{font-family:var(--font-d);font-size:2rem;font-weight:700;letter-spacing:-0.03em}
+.loader-logo span{color:var(--c0)}
+.loader-bar-wrap{width:200px;height:1px;background:rgba(255,255,255,0.08);border-radius:1px;overflow:hidden}
+.loader-bar{height:100%;background:linear-gradient(90deg,var(--c1),var(--c0));border-radius:1px;width:0;transition:width .05s linear}
+.loader-text{font-family:var(--font-m);font-size:0.68rem;color:var(--t2);letter-spacing:0.12em;text-transform:uppercase}
+
+/* NAV */
+#nav{position:fixed;top:0;left:0;right:0;z-index:1000;padding:0 3rem;height:64px;display:flex;align-items:center;justify-content:space-between;transition:all .5s;transform:translateY(0)}
+#nav.hidden{transform:translateY(-100%)}
+#nav.scrolled{background:rgba(3,8,15,0.85);backdrop-filter:blur(24px);border-bottom:0.5px solid var(--border)}
+.nav-logo{font-family:var(--font-d);font-size:1.1rem;font-weight:600;letter-spacing:-0.02em;display:flex;align-items:center;gap:8px}
+.nav-logo-dot{width:6px;height:6px;background:var(--c0);border-radius:50%;box-shadow:0 0 8px var(--c0)}
+.nav-links{display:flex;gap:0;list-style:none}
+.nav-links a{color:var(--t1);text-decoration:none;font-size:0.78rem;font-weight:400;letter-spacing:0.02em;padding:8px 16px;border-radius:6px;transition:color .2s;position:relative}
+.nav-links a::after{content:'';position:absolute;bottom:4px;left:50%;right:50%;height:1px;background:var(--c0);transition:left .3s,right .3s;opacity:0}
+.nav-links a:hover{color:var(--t0)}
+.nav-links a:hover::after{left:16px;right:16px;opacity:1}
+.nav-live{display:flex;align-items:center;gap:8px;font-size:0.72rem;font-family:var(--font-m);color:var(--c2);letter-spacing:0.04em}
+.live-dot{width:5px;height:5px;background:var(--c2);border-radius:50%;animation:livePulse 2s infinite}
+@keyframes livePulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(0,255,136,.4)}50%{opacity:.7;box-shadow:0 0 0 5px rgba(0,255,136,0)}}
+
+/* HERO */
+#hero{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden}
+#hero-canvas{position:absolute;inset:0;z-index:0}
+.hero-inner{position:relative;z-index:2;text-align:center;max-width:860px;padding:0 2rem}
+.hero-chip{display:inline-flex;align-items:center;gap:8px;background:rgba(0,212,255,0.06);border:0.5px solid rgba(0,212,255,0.2);padding:6px 16px;border-radius:100px;font-size:0.7rem;font-family:var(--font-m);color:var(--c0);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:2.5rem;opacity:0;animation:fadeUp .8s .3s forwards}
+.hero-title{font-family:var(--font-d);font-size:clamp(3.5rem,8vw,7rem);font-weight:300;line-height:0.95;letter-spacing:-0.05em;margin-bottom:1.5rem;opacity:0;animation:fadeUp .8s .5s forwards}
+.hero-title strong{font-weight:700;background:linear-gradient(135deg,#00d4ff 0%,#7c3aed 50%,#ff3366 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:1rem;color:var(--t1);line-height:1.7;max-width:520px;margin:0 auto 3rem;font-weight:300;opacity:0;animation:fadeUp .8s .7s forwards}
+.hero-ctas{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;opacity:0;animation:fadeUp .8s .9s forwards}
+.cta-primary{background:var(--c0);color:#020810;padding:14px 32px;border-radius:100px;font-weight:600;font-size:0.88rem;text-decoration:none;border:none;cursor:pointer;transition:all .2s;letter-spacing:0.01em;display:inline-flex;align-items:center;gap:8px}
+.cta-primary:hover{background:#33ddff;transform:translateY(-2px);box-shadow:0 16px 40px rgba(0,212,255,0.25)}
+.cta-outline{background:transparent;color:var(--t0);padding:14px 32px;border-radius:100px;font-weight:400;font-size:0.88rem;border:0.5px solid rgba(255,255,255,0.15);cursor:pointer;transition:all .2s;text-decoration:none;display:inline-flex;align-items:center;gap:8px;letter-spacing:0.01em}
+.cta-outline:hover{border-color:rgba(0,212,255,0.4);color:var(--c0)}
+.hero-metrics{position:absolute;bottom:0;left:0;right:0;z-index:2;display:flex;justify-content:center;gap:0;padding:0 3rem 3rem}
+.h-metric{flex:1;max-width:200px;text-align:center;padding:1.5rem}
+.h-metric-n{font-family:var(--font-d);font-size:2rem;font-weight:700;background:linear-gradient(135deg,var(--c0),var(--c1));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+.h-metric-l{font-size:0.68rem;color:var(--t2);text-transform:uppercase;letter-spacing:0.1em;margin-top:6px}
+.hero-scroll{position:absolute;bottom:5rem;left:50%;transform:translateX(-50%);z-index:2;display:flex;flex-direction:column;align-items:center;gap:6px;opacity:.5}
+.scroll-text{font-size:0.65rem;font-family:var(--font-m);letter-spacing:0.15em;text-transform:uppercase;color:var(--t1)}
+.scroll-line{width:0.5px;height:40px;background:linear-gradient(var(--c0),transparent);animation:scrollAnim 2s infinite}
+@keyframes scrollAnim{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+/* SECTIONS */
+section{padding:8rem 3rem;position:relative}
+.section-wrap{max-width:1200px;margin:0 auto}
+.s-label{font-family:var(--font-m);font-size:0.68rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--c0);margin-bottom:1.25rem;display:flex;align-items:center;gap:12px}
+.s-label::before{content:'';width:24px;height:0.5px;background:var(--c0)}
+.s-title{font-family:var(--font-d);font-size:clamp(2.5rem,4vw,4rem);font-weight:300;letter-spacing:-0.04em;line-height:1.05;margin-bottom:1.25rem}
+.s-title strong{font-weight:700}
+.s-desc{color:var(--t1);font-size:0.95rem;line-height:1.75;max-width:540px;font-weight:300}
+.reveal{opacity:0;transform:translateY(32px);transition:opacity .8s,transform .8s}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+/* TWIN */
+#twin{background:var(--bg2)}
+#twin-canvas{width:100%;height:540px;border-radius:20px;border:0.5px solid var(--border2);background:var(--bg);cursor:grab;position:relative;overflow:hidden}
+#twin-canvas:active{cursor:grabbing}
+.twin-hud{position:absolute;top:1.5rem;right:1.5rem;display:flex;flex-direction:column;gap:8px;z-index:10}
+.twin-hud-item{background:var(--glass);backdrop-filter:blur(12px);border:0.5px solid var(--border);padding:8px 14px;border-radius:8px;font-family:var(--font-m);font-size:0.68rem;display:flex;align-items:center;gap:8px;color:var(--t1)}
+.hud-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.twin-controls{display:flex;gap:8px;margin-top:1.25rem;flex-wrap:wrap}
+.t-btn{background:var(--bg3);border:0.5px solid var(--border);color:var(--t1);padding:8px 18px;border-radius:100px;font-size:0.75rem;cursor:pointer;transition:all .2s;font-family:var(--font-b)}
+.t-btn:hover,.t-btn.on{background:rgba(0,212,255,0.08);border-color:rgba(0,212,255,0.3);color:var(--c0)}
+.twin-timeline{margin-top:1.5rem;padding:1.25rem 1.5rem;background:var(--bg3);border:0.5px solid var(--border);border-radius:14px}
+.tl-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.tl-label{font-family:var(--font-m);font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--t2)}
+.tl-time{font-family:var(--font-m);font-size:1rem;color:var(--c0)}
+input[type=range].tl-slider{width:100%;height:2px;-webkit-appearance:none;background:linear-gradient(90deg,var(--c0) var(--p,35%),rgba(255,255,255,.08) var(--p,35%));border-radius:2px;outline:none;cursor:pointer}
+input[type=range].tl-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:var(--bg);border:2px solid var(--c0);border-radius:50%;cursor:pointer;transition:transform .15s}
+input[type=range].tl-slider::-webkit-slider-thumb:hover{transform:scale(1.3)}
+.tl-marks{display:flex;justify-content:space-between;margin-top:8px;font-family:var(--font-m);font-size:0.62rem;color:var(--t2)}
+
+/* DETECTION */
+#detection{background:var(--bg)}
+.detect-asymm{display:grid;grid-template-columns:1fr 1.1fr;gap:3rem;align-items:start}
+.drop-zone{border:0.5px dashed rgba(0,212,255,0.2);border-radius:20px;padding:4rem 2rem;text-align:center;cursor:pointer;transition:all .4s;background:rgba(0,212,255,0.02);position:relative;overflow:hidden}
+.drop-zone::before{content:'';position:absolute;inset:-100%;background:conic-gradient(from 0deg,transparent,rgba(0,212,255,0.08),transparent);animation:rotateBorder 4s linear infinite;opacity:0;transition:opacity .3s}
+.drop-zone:hover::before,.drop-zone.active::before{opacity:1}
+.drop-zone:hover,.drop-zone.active{border-color:rgba(0,212,255,0.4);background:rgba(0,212,255,0.04)}
+@keyframes rotateBorder{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.dz-icon{font-size:3rem;margin-bottom:1rem;opacity:0.3}
+.dz-text{font-size:0.85rem;color:var(--t1);line-height:1.7}
+.dz-text strong{display:block;color:var(--t0);font-weight:500;margin-bottom:4px;font-size:1rem}
+.detect-btns{display:flex;gap:8px;margin-top:1.25rem;flex-wrap:wrap}
+.d-btn{background:var(--bg3);border:0.5px solid var(--border);color:var(--t1);padding:9px 20px;border-radius:100px;font-size:0.78rem;cursor:pointer;transition:all .2s;font-family:var(--font-b)}
+.d-btn.primary{background:var(--c0);color:#020810;border-color:transparent;font-weight:600}
+.d-btn.primary:hover{background:#33ddff}
+.d-btn:not(.primary):hover{border-color:var(--border2);color:var(--t0)}
+.detect-out{background:var(--bg2);border:0.5px solid var(--border);border-radius:20px;padding:1.5rem;overflow:hidden}
+.do-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:0.5px solid var(--border)}
+.do-title{font-size:0.85rem;font-weight:500;display:flex;align-items:center;gap:8px}
+.do-fps{font-family:var(--font-m);font-size:0.68rem;padding:4px 10px;background:rgba(0,255,136,0.08);border:0.5px solid rgba(0,255,136,0.2);color:var(--c2);border-radius:100px}
+#det-canvas{width:100%;border-radius:12px;background:#040d1a;min-height:220px;display:block;border:0.5px solid var(--border)}
+.v-list{margin-top:1.25rem;display:flex;flex-direction:column;gap:6px}
+.v-item{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg3);border-radius:10px;border:0.5px solid var(--border)}
+.v-left{display:flex;align-items:center;gap:10px;font-size:0.82rem}
+.v-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.v-bar-wrap{width:72px;height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden}
+.v-bar{height:100%;border-radius:2px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.v-conf{font-family:var(--font-m);font-size:0.68rem;color:var(--t2);min-width:28px;text-align:right}
+
+/* PLATE */
+.plate-section{margin-top:3rem}
+.plate-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:1.25rem}
+.plate-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:14px;padding:1.25rem;transition:border-color .2s}
+.plate-card:hover{border-color:var(--border2)}
+.plate-num{font-family:var(--font-m);font-size:1rem;font-weight:500;color:var(--c0);margin-bottom:6px;letter-spacing:0.06em}
+.plate-meta{font-size:0.72rem;color:var(--t2);line-height:1.9}
+.plate-tag{display:inline-block;margin-top:8px;padding:2px 10px;border-radius:100px;font-size:0.65rem;font-weight:500;letter-spacing:0.04em;border:0.5px solid}
+.plate-tag.red{color:var(--c3);border-color:rgba(255,51,102,.3);background:rgba(255,51,102,.06)}
+.plate-tag.amber{color:var(--c4);border-color:rgba(255,170,0,.3);background:rgba(255,170,0,.06)}
+.plate-tag.green{color:var(--c2);border-color:rgba(0,255,136,.3);background:rgba(0,255,136,.06)}
+
+/* HEATMAP */
+#hmap{background:var(--bg2)}
+#hmap-canvas{width:100%;height:460px;border-radius:20px;border:0.5px solid var(--border)}
+
+/* ANALYTICS */
+#analytics{background:var(--bg)}
+.analytics-asymm{display:grid;grid-template-columns:1fr 1.8fr;gap:4rem;align-items:start}
+.kpi-stack{display:flex;flex-direction:column;gap:1rem}
+.kpi-card{padding:1.5rem;background:var(--bg2);border:0.5px solid var(--border);border-radius:16px;transition:border-color .3s}
+.kpi-card:hover{border-color:var(--border2)}
+.kpi-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem}
+.kpi-label{font-size:0.72rem;color:var(--t2);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--font-m)}
+.kpi-delta{font-size:0.68rem;font-weight:500;padding:3px 8px;border-radius:100px}
+.kpi-delta.up{color:var(--c3);background:rgba(255,51,102,.08);border:0.5px solid rgba(255,51,102,.2)}
+.kpi-delta.dn{color:var(--c2);background:rgba(0,255,136,.08);border:0.5px solid rgba(0,255,136,.2)}
+.kpi-val{font-family:var(--font-d);font-size:2.2rem;font-weight:700;line-height:1}
+.kpi-sub{font-size:0.72rem;color:var(--t2);margin-top:6px}
+.chart-area{display:flex;flex-direction:column;gap:1.5rem}
+.chart-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:16px;padding:1.5rem}
+.chart-title{font-size:0.8rem;font-weight:500;margin-bottom:1.25rem;color:var(--t1)}
+canvas.chart-c{width:100%!important}
+
+/* RISK */
+#risk{background:var(--bg2)}
+.risk-split{display:grid;grid-template-columns:1fr 1fr;gap:3rem}
+.risk-gauge-wrap{background:var(--bg);border:0.5px solid var(--border);border-radius:20px;padding:2rem;text-align:center}
+canvas#rgauge{display:block;margin:0 auto}
+.risk-n{font-family:var(--font-d);font-size:3rem;font-weight:700;color:var(--c4);margin-top:-1rem}
+.risk-l{font-size:0.72rem;color:var(--t2);text-transform:uppercase;letter-spacing:0.08em;margin-top:4px}
+.recs{margin-top:1.5rem}
+.rec-heading{font-size:0.68rem;font-family:var(--font-m);text-transform:uppercase;letter-spacing:0.1em;color:var(--t2);margin-bottom:0.75rem}
+.rec-item{display:flex;gap:12px;align-items:flex-start;padding:12px;background:var(--bg3);border-radius:10px;margin-bottom:8px;border:0.5px solid var(--border);transition:border-color .2s}
+.rec-item:hover{border-color:var(--border2)}
+.rec-icon-wrap{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.rec-text strong{display:block;font-size:0.82rem;font-weight:500;margin-bottom:2px}
+.rec-text span{font-size:0.72rem;color:var(--t2);line-height:1.5}
+.zone-list{background:var(--bg);border:0.5px solid var(--border);border-radius:20px;padding:1.5rem}
+.zone-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:0.5px solid rgba(255,255,255,0.04)}
+.zone-row:last-child{border-bottom:none}
+.zone-name-wrap{flex:1}
+.zone-name{font-size:0.82rem;font-weight:500}
+.zone-road{font-size:0.68rem;color:var(--t2)}
+.zone-bar-bg{width:80px;height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+.zone-bar-f{height:100%;border-radius:2px;transition:width 1.2s cubic-bezier(.4,0,.2,1)}
+.zone-score{font-family:var(--font-m);font-size:0.75rem;font-weight:500;min-width:24px;text-align:right}
+
+/* COPILOT */
+#copilot{background:var(--bg)}
+.copilot-layout{display:grid;grid-template-columns:1.3fr 1fr;gap:3rem;align-items:start}
+.chat-wrap{background:var(--bg2);border:0.5px solid var(--border);border-radius:20px;overflow:hidden;display:flex;flex-direction:column;height:520px}
+.chat-top{padding:1rem 1.25rem;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--bg3)}
+.ai-orb{width:34px;height:34px;border-radius:50%;background:conic-gradient(from 180deg,var(--c1),var(--c0),var(--c1));display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;color:var(--bg);flex-shrink:0;animation:orbSpin 8s linear infinite}
+@keyframes orbSpin{from{filter:hue-rotate(0deg)}to{filter:hue-rotate(360deg)}}
+.chat-name{font-weight:500;font-size:0.85rem}
+.chat-status{font-size:0.68rem;color:var(--c2)}
+.chat-msgs{flex:1;overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column;gap:0.75rem;scrollbar-width:none}
+.chat-msgs::-webkit-scrollbar{display:none}
+.msg{max-width:88%;padding:10px 14px;border-radius:14px;font-size:0.82rem;line-height:1.55}
+.msg.ai{background:var(--bg3);color:var(--t0);border-bottom-left-radius:4px;align-self:flex-start;border:0.5px solid var(--border)}
+.msg.user{background:linear-gradient(135deg,rgba(0,212,255,.12),rgba(124,58,237,.12));border:0.5px solid rgba(0,212,255,.15);color:var(--t0);align-self:flex-end;border-bottom-right-radius:4px}
+.typing{display:flex;gap:4px;align-items:center;padding:4px 0}
+.td{width:5px;height:5px;background:var(--t2);border-radius:50%;animation:tdBounce 1s infinite}
+.td:nth-child(2){animation-delay:.15s}.td:nth-child(3){animation-delay:.3s}
+@keyframes tdBounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
+.chat-in{padding:0.75rem 1rem;border-top:0.5px solid var(--border);display:flex;gap:8px}
+.chat-input{flex:1;background:var(--bg);border:0.5px solid var(--border);border-radius:10px;padding:9px 14px;color:var(--t0);font-size:0.82rem;font-family:var(--font-b);outline:none;transition:border-color .2s}
+.chat-input:focus{border-color:rgba(0,212,255,.35)}
+.chat-send{background:var(--c0);border:none;border-radius:10px;width:36px;height:36px;cursor:pointer;color:var(--bg);font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.chat-send:hover{background:#33ddff}
+.quick-side{display:flex;flex-direction:column;gap:1rem}
+.qs-label{font-family:var(--font-m);font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--t2);margin-bottom:0.25rem}
+.qp-btn{background:var(--bg2);border:0.5px solid var(--border);color:var(--t1);padding:10px 14px;border-radius:10px;font-size:0.78rem;text-align:left;cursor:pointer;transition:all .2s;font-family:var(--font-b);line-height:1.4;width:100%}
+.qp-btn:hover{border-color:rgba(0,212,255,.25);color:var(--t0);transform:translateX(3px)}
+.sys-status{background:var(--bg2);border:0.5px solid var(--border);border-radius:14px;padding:1.25rem;margin-top:0.5rem}
+.ss-row{display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;padding:5px 0;border-bottom:0.5px solid rgba(255,255,255,.04)}
+.ss-row:last-child{border-bottom:none}
+.ss-key{color:var(--t2)}
+.ss-val{font-family:var(--font-m);font-size:0.7rem;font-weight:500}
+
+/* EVIDENCE */
+#evidence{background:var(--bg2)}
+.ev-card{background:var(--bg);border:0.5px solid var(--border);border-radius:20px;padding:2rem;display:grid;grid-template-columns:220px 1fr;gap:2rem;transition:border-color .3s}
+.ev-card:hover{border-color:var(--border2)}
+.ev-thumb{border-radius:14px;background:var(--bg2);border:0.5px solid var(--border);aspect-ratio:4/3;overflow:hidden}
+#ev-canvas{width:100%;height:100%;display:block}
+.ev-id{font-family:var(--font-m);font-size:0.65rem;color:var(--c0);background:rgba(0,212,255,.06);border:0.5px solid rgba(0,212,255,.15);padding:4px 12px;border-radius:100px;display:inline-block;margin-bottom:0.75rem}
+.ev-type{font-family:var(--font-d);font-size:1.5rem;font-weight:600;letter-spacing:-0.02em;margin-bottom:1.25rem}
+.ev-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;margin-bottom:1.5rem}
+.em-item .em-k{font-size:0.65rem;color:var(--t2);text-transform:uppercase;letter-spacing:0.06em;font-family:var(--font-m);margin-bottom:3px}
+.em-item .em-v{font-size:0.82rem;font-weight:500}
+.ev-actions{display:flex;gap:10px;align-items:center}
+.fine-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(255,51,102,.08);border:0.5px solid rgba(255,51,102,.25);color:var(--c3);padding:10px 20px;border-radius:100px;font-weight:700;font-size:1rem}
+.ev-dl{background:var(--c0);color:#020810;border:none;padding:10px 22px;border-radius:100px;font-weight:600;font-size:0.82rem;cursor:pointer;transition:all .2s}
+.ev-dl:hover{background:#33ddff}
+.ev-snd{background:transparent;color:var(--t1);border:0.5px solid var(--border);padding:10px 22px;border-radius:100px;font-size:0.82rem;cursor:pointer;transition:all .2s}
+.ev-snd:hover{border-color:var(--border2);color:var(--t0)}
+
+/* OFFICER */
+#officer{background:var(--bg)}
+.officer-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+.off-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:20px;padding:1.5rem;transition:border-color .3s}
+.off-card:hover{border-color:var(--border2)}
+.off-head{display:flex;align-items:center;gap:12px;margin-bottom:1.25rem;padding-bottom:1.25rem;border-bottom:0.5px solid rgba(255,255,255,.05)}
+.off-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.9rem;color:var(--bg);flex-shrink:0}
+.off-name{font-weight:500;font-size:0.92rem}
+.off-badge-txt{font-size:0.68rem;color:var(--t2);margin-top:1px}
+.status-pill{padding:3px 10px;border-radius:100px;font-size:0.62rem;font-weight:600;letter-spacing:0.04em;margin-left:auto}
+.status-pill.active{background:rgba(0,255,136,.08);color:var(--c2);border:0.5px solid rgba(0,255,136,.2)}
+.status-pill.patrol{background:rgba(0,212,255,.08);color:var(--c0);border:0.5px solid rgba(0,212,255,.2)}
+.off-stats{display:flex;gap:0.75rem;margin-bottom:1.25rem}
+.os{flex:1;text-align:center;padding:10px;background:var(--bg3);border-radius:10px;border:0.5px solid var(--border)}
+.os-n{font-family:var(--font-d);font-size:1.3rem;font-weight:700;color:var(--c0);line-height:1}
+.os-l{font-size:0.62rem;color:var(--t2);text-transform:uppercase;letter-spacing:0.05em;margin-top:4px}
+.nearby-item{display:flex;align-items:center;gap:10px;padding:8px;background:var(--bg3);border-radius:8px;margin-bottom:6px;font-size:0.78rem;border:0.5px solid var(--border)}
+.nb-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.nb-dist{font-family:var(--font-m);font-size:0.65rem;color:var(--t2);margin-left:auto}
+
+/* CITIZEN */
+#citizen{background:var(--bg2)}
+.citizen-split{display:grid;grid-template-columns:1fr 1.2fr;gap:3rem;align-items:start}
+.report-card{background:var(--bg);border:0.5px solid var(--border);border-radius:20px;padding:1.75rem}
+.report-drop{border:0.5px dashed rgba(0,212,255,.15);border-radius:14px;padding:2.5rem;text-align:center;cursor:pointer;transition:all .3s;margin-bottom:1.25rem}
+.report-drop:hover{border-color:rgba(0,212,255,.3);background:rgba(0,212,255,.02)}
+.reward-info{background:rgba(0,255,136,.04);border:0.5px solid rgba(0,255,136,.1);border-radius:12px;padding:1rem}
+.ri-title{font-size:0.72rem;font-weight:600;color:var(--c2);margin-bottom:0.75rem;display:flex;align-items:center;gap:6px}
+.ri-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.ri-item{font-size:0.72rem;color:var(--t2)}
+.ri-item span{color:var(--c2);font-weight:600}
+.leaderboard{background:var(--bg);border:0.5px solid var(--border);border-radius:20px;padding:1.75rem}
+.lb-title{font-weight:500;font-size:0.88rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:8px}
+.lb-row{display:flex;align-items:center;gap:12px;padding:8px;border-radius:8px;transition:background .2s;cursor:default}
+.lb-row:hover{background:rgba(255,255,255,.03)}
+.lb-rank{font-family:var(--font-m);font-size:0.78rem;font-weight:500;width:22px;text-align:center}
+.lb-rank.g{color:var(--c4)}.lb-rank.s{color:#94a3b8}.lb-rank.b{color:#92603b}
+.lb-avi{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.68rem;font-weight:700;color:var(--bg);flex-shrink:0}
+.lb-name{font-size:0.82rem;font-weight:500;flex:1}
+.lb-pts{font-family:var(--font-m);font-size:0.75rem;color:var(--c0)}
+
+/* FOOTER */
+footer{background:var(--bg2);border-top:0.5px solid var(--border);padding:3rem}
+.footer-inner{max-width:1200px;margin:0 auto}
+.footer-logo{font-family:var(--font-d);font-size:1.4rem;font-weight:700;letter-spacing:-0.03em;margin-bottom:0.5rem}
+.footer-sub{font-size:0.78rem;color:var(--t2);margin-bottom:2rem}
+.footer-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin-bottom:2rem}
+.footer-stat{background:var(--bg3);border:0.5px solid var(--border);border-radius:12px;padding:1rem;text-align:center}
+.fs-icon{font-size:1.2rem;margin-bottom:6px;opacity:.5}
+.fs-val{font-family:var(--font-m);font-size:0.88rem;font-weight:500;color:var(--c0);margin-bottom:2px}
+.fs-lbl{font-size:0.62rem;color:var(--t2);text-transform:uppercase;letter-spacing:0.06em}
+.footer-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:1.5rem;border-top:0.5px solid var(--border)}
+.tech-pills{display:flex;gap:6px;flex-wrap:wrap}
+.tp{background:var(--bg3);border:0.5px solid var(--border);color:var(--t2);padding:4px 10px;border-radius:100px;font-size:0.65rem;font-family:var(--font-m)}
+.footer-copy{font-size:0.72rem;color:var(--t2)}
+
+/* Chart.js loaded later */
+</style>
+</head>
+<body>
+
+<!-- CURSOR -->
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="loader-logo">Traffic<span>Verse</span> AI</div>
+  <div class="loader-bar-wrap"><div class="loader-bar" id="lbar"></div></div>
+  <div class="loader-text" id="ltext">Initialising neural pipeline...</div>
+</div>
+
+<!-- NAV -->
+<nav id="nav">
+  <div class="nav-logo"><div class="nav-logo-dot"></div>TrafficVerse AI</div>
+  <ul class="nav-links">
+    <li><a href="#twin">Digital Twin</a></li>
+    <li><a href="#detection">Detection</a></li>
+    <li><a href="#analytics">Analytics</a></li>
+    <li><a href="#risk">Risk Engine</a></li>
+    <li><a href="#copilot">AI Copilot</a></li>
+    <li><a href="#officer">Officers</a></li>
+    <li><a href="trafficverse_replay.html">Violation Replay ↗</a></li>
+  </ul>
+  <div class="nav-live"><div class="live-dot"></div>47 cameras live</div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-inner">
+    <div class="hero-chip">YOLOv11x · ByteTrack · PaddleOCR · Real-time</div>
+    <h1 class="hero-title">The intelligence<br><strong>behind safer roads</strong></h1>
+    <p class="hero-sub">AI-powered computer vision that detects violations in real-time, generates court-admissible evidence instantly, and predicts congestion before it happens.</p>
+    <div class="hero-ctas">
+      <a href="#twin" class="cta-primary">Enter Command Center →</a>
+      <a href="#detection" class="cta-outline">Watch AI Detect</a>
+      <a href="trafficverse_replay.html" class="cta-outline" style="border-color:rgba(255,51,102,.25);color:#ff3366">▶ Violation Replay</a>
+    </div>
+  </div>
+  <div class="hero-metrics">
+    <div class="h-metric"><div class="h-metric-n" id="hm1">0</div><div class="h-metric-l">Violations detected today</div></div>
+    <div class="h-metric"><div class="h-metric-n" id="hm2">0</div><div class="h-metric-l">Detection accuracy</div></div>
+    <div class="h-metric"><div class="h-metric-n" id="hm3">0</div><div class="h-metric-l">Cameras online</div></div>
+    <div class="h-metric"><div class="h-metric-n" id="hm4">0</div><div class="h-metric-l">Avg inference</div></div>
+  </div>
+  <div class="hero-scroll"><span class="scroll-text">Scroll</span><div class="scroll-line"></div></div>
+</section>
+
+<!-- DIGITAL TWIN -->
+<section id="twin">
+  <div class="section-wrap">
+    <div class="reveal">
+      <div class="s-label">Digital Twin</div>
+      <h2 class="s-title">Bengaluru<br><strong>Command Center</strong></h2>
+      <p class="s-desc" style="margin-bottom:2rem">Interactive 3D city model with live vehicle tracking, violation hotspots, and real-time traffic flow. Drag to rotate · scroll to zoom.</p>
+    </div>
+    <div style="position:relative">
+      <canvas id="twin-canvas" class="reveal"></canvas>
+      <div class="twin-hud">
+        <div class="twin-hud-item"><div class="hud-dot" style="background:var(--c2)"></div>47 cameras active</div>
+        <div class="twin-hud-item"><div class="hud-dot" style="background:var(--c3)"></div>12 violations live</div>
+        <div class="twin-hud-item"><div class="hud-dot" style="background:var(--c0)"></div>Risk: 74/100</div>
+      </div>
+    </div>
+    <div class="twin-controls reveal">
+      <button class="t-btn on" onclick="setLayer('all',this)">All layers</button>
+      <button class="t-btn" onclick="setLayer('violations',this)">Violations</button>
+      <button class="t-btn" onclick="setLayer('traffic',this)">Traffic flow</button>
+      <button class="t-btn" onclick="setLayer('parking',this)">Parking</button>
+      <button class="t-btn" onclick="setLayer('police',this)">Police units</button>
+      <button class="t-btn" onclick="setLayer('heatmap',this)">Heatmap</button>
+    </div>
+    <div class="twin-timeline reveal">
+      <div class="tl-header">
+        <span class="tl-label">Timeline replay</span>
+        <span class="tl-time" id="tl-disp">08:30 AM</span>
+        <span class="tl-label">1× speed</span>
+      </div>
+      <input type="range" class="tl-slider" min="0" max="100" value="35" id="tl-range">
+      <div class="tl-marks"><span>06:00</span><span>07:00</span><span>08:00</span><span>09:00</span><span>10:00</span><span>11:00</span><span>12:00</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- DETECTION -->
+<section id="detection">
+  <div class="section-wrap">
+    <div class="reveal">
+      <div class="s-label">AI Detection</div>
+      <h2 class="s-title">Real-time<br><strong>violation detection</strong></h2>
+      <p class="s-desc" style="margin-bottom:2.5rem">Upload any image or video. YOLOv11x detects 8 violation types at 34 FPS with 97.3% accuracy.</p>
+    </div>
+    <div class="detect-asymm">
+      <div>
+        <div class="drop-zone reveal" id="dz" onclick="document.getElementById('fi').click()" ondragover="event.preventDefault();this.classList.add('active')" ondragleave="this.classList.remove('active')">
+          <div class="dz-icon">⬆</div>
+          <div class="dz-text"><strong>Drop image or video here</strong>JPG, PNG, MP4, AVI — or connect webcam<br>for live detection at 34 FPS</div>
+        </div>
+        <input type="file" id="fi" style="display:none" accept="image/*,video/*" onchange="handleFile()">
+        <div class="detect-btns reveal">
+          <button class="d-btn primary" onclick="simulateDetection()">▶ Simulate detection</button>
+          <button class="d-btn" onclick="alert('getUserMedia → YOLO pipeline at 30fps')">Webcam</button>
+          <button class="d-btn" onclick="clearDetect()">Clear</button>
+        </div>
+        <div class="plate-section reveal">
+          <div class="s-label" style="font-size:.6rem;margin-bottom:.75rem">License plate OCR</div>
+          <div class="plate-grid" id="plate-grid">
+            <div class="plate-card"><div class="plate-num">KA 03 MX 1234</div><div class="plate-meta">Two-Wheeler<br>Honda Activa · Black<br>Conf: 97.3%</div><span class="plate-tag red">Helmet violation</span></div>
+            <div class="plate-card"><div class="plate-num">KA 01 AB 5678</div><div class="plate-meta">Car<br>Maruti Swift · White<br>Conf: 94.1%</div><span class="plate-tag amber">Stop line</span></div>
+            <div class="plate-card"><div class="plate-num">KA 05 MH 9012</div><div class="plate-meta">Car<br>Honda City · Silver<br>Conf: 91.8%</div><span class="plate-tag green">No violation</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="reveal">
+        <div class="detect-out">
+          <div class="do-header">
+            <span class="do-title">AI detection feed</span>
+            <span class="do-fps" id="fps-disp">⚡ 34.2 FPS</span>
+          </div>
+          <canvas id="det-canvas" height="220"></canvas>
+          <div class="v-list" id="v-list">
+            <div class="v-item"><div class="v-left"><div class="v-dot" style="background:var(--c3)"></div>Helmet violation</div><div style="display:flex;align-items:center;gap:8px"><div class="v-bar-wrap"><div class="v-bar" style="width:97%;background:var(--c3)"></div></div><span class="v-conf">97%</span></div></div>
+            <div class="v-item"><div class="v-left"><div class="v-dot" style="background:var(--c4)"></div>Triple riding</div><div style="display:flex;align-items:center;gap:8px"><div class="v-bar-wrap"><div class="v-bar" style="width:89%;background:var(--c4)"></div></div><span class="v-conf">89%</span></div></div>
+            <div class="v-item"><div class="v-left"><div class="v-dot" style="background:var(--c1)"></div>No seatbelt</div><div style="display:flex;align-items:center;gap:8px"><div class="v-bar-wrap"><div class="v-bar" style="width:82%;background:var(--c1)"></div></div><span class="v-conf">82%</span></div></div>
+            <div class="v-item"><div class="v-left"><div class="v-dot" style="background:var(--c0)"></div>Red light</div><div style="display:flex;align-items:center;gap:8px"><div class="v-bar-wrap"><div class="v-bar" style="width:76%;background:var(--c0)"></div></div><span class="v-conf">76%</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HEATMAP -->
+<section id="hmap">
+  <div class="section-wrap">
+    <div class="reveal">
+      <div class="s-label">Spatial intelligence</div>
+      <h2 class="s-title">Violation<br><strong>density map</strong></h2>
+      <p class="s-desc" style="margin-bottom:2rem">Animated spatial heatmap showing violation hotspots, congestion zones, and illegal parking clusters updated every 60 seconds.</p>
+    </div>
+    <canvas id="hmap-canvas" class="reveal"></canvas>
+    <div class="twin-controls reveal" style="margin-top:1.25rem">
+      <button class="t-btn on">All violations</button>
+      <button class="t-btn">Helmet only</button>
+      <button class="t-btn">Parking</button>
+      <button class="t-btn">Wrong-side</button>
+      <button class="t-btn">Red light</button>
+    </div>
+  </div>
+</section>
+
+<!-- ANALYTICS -->
+<section id="analytics">
+  <div class="section-wrap">
+    <div class="reveal" style="margin-bottom:3rem">
+      <div class="s-label">Analytics</div>
+      <h2 class="s-title">Traffic intelligence<br><strong>at a glance</strong></h2>
+    </div>
+    <div class="analytics-asymm">
+      <div class="kpi-stack reveal">
+        <div class="kpi-card">
+          <div class="kpi-top"><span class="kpi-label">Total violations today</span><span class="kpi-delta up">↑ 12.4%</span></div>
+          <div class="kpi-val" style="color:var(--c0)">2,847</div>
+          <div class="kpi-sub">vs 2,534 yesterday</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-top"><span class="kpi-label">Fines collected</span><span class="kpi-delta dn">↑ 8.3%</span></div>
+          <div class="kpi-val" style="color:var(--c2)">₹14.2L</div>
+          <div class="kpi-sub">₹13.1L yesterday</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-top"><span class="kpi-label">Helmet violations</span><span class="kpi-delta up">↑ 18.7%</span></div>
+          <div class="kpi-val" style="color:var(--c3)">847</div>
+          <div class="kpi-sub">Highest: MG Road (247)</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-top"><span class="kpi-label">Evidence quality</span><span class="kpi-delta dn">↑ 1.4%</span></div>
+          <div class="kpi-val" style="color:var(--c4)">91.2%</div>
+          <div class="kpi-sub">Best this week</div>
+        </div>
+      </div>
+      <div class="chart-area reveal">
+        <div class="chart-card"><div class="chart-title">Violation trend — last 24 hours</div><canvas id="trend-chart" class="chart-c" height="180"></canvas></div>
+        <div class="chart-card"><div class="chart-title">Breakdown by type</div><canvas id="donut-chart" class="chart-c" height="180"></canvas></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RISK ENGINE -->
+<section id="risk">
+  <div class="section-wrap">
+    <div class="reveal" style="margin-bottom:3rem">
+      <div class="s-label">Risk engine</div>
+      <h2 class="s-title">AI risk<br><strong>intelligence</strong></h2>
+      <p class="s-desc">Predictive risk scoring for every zone. Know where to deploy officers before violations happen.</p>
+    </div>
+    <div class="risk-split">
+      <div class="reveal">
+        <div class="risk-gauge-wrap">
+          <canvas id="rgauge" width="220" height="130"></canvas>
+          <div class="risk-n">74</div>
+          <div class="risk-l">City-wide risk index</div>
+          <div style="font-size:.72rem;color:var(--c4);margin-top:6px;font-weight:600">HIGH RISK — Deploy resources</div>
+        </div>
+        <div class="recs" style="margin-top:1.25rem">
+          <div class="rec-heading">AI recommendations</div>
+          <div class="rec-item"><div class="rec-icon-wrap" style="background:rgba(0,212,255,.08)">👮</div><div class="rec-text"><strong>Deploy 3 officers to MG Road</strong><span>Helmet violations up 340% — peak hour approaching</span></div></div>
+          <div class="rec-item"><div class="rec-icon-wrap" style="background:rgba(255,51,102,.08)">🚨</div><div class="rec-text"><strong>Tow vehicles on Brigade Road</strong><span>14 illegally parked blocking emergency lane</span></div></div>
+          <div class="rec-item"><div class="rec-icon-wrap" style="background:rgba(124,58,237,.08)">🚦</div><div class="rec-text"><strong>Optimise signal at Silk Board</strong><span>Predicted 2.4km queue in 20 minutes</span></div></div>
+          <div class="rec-item"><div class="rec-icon-wrap" style="background:rgba(0,255,136,.08)">🚁</div><div class="rec-text"><strong>Deploy drone to Outer Ring Road</strong><span>Wrong-side driving cluster detected</span></div></div>
+        </div>
+      </div>
+      <div class="reveal">
+        <div class="zone-list">
+          <div class="chart-title" style="margin-bottom:1.25rem">Zone risk scores</div>
+          <div id="zone-rows"></div>
+        </div>
+        <div class="chart-card" style="margin-top:1.25rem">
+          <div class="chart-title">Predicted congestion — next 2 hours</div>
+          <canvas id="pred-chart" class="chart-c" height="150"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COPILOT -->
+<section id="copilot">
+  <div class="section-wrap">
+    <div class="reveal" style="margin-bottom:3rem">
+      <div class="s-label">AI Copilot</div>
+      <h2 class="s-title">Ask the traffic<br><strong>intelligence AI</strong></h2>
+      <p class="s-desc">Natural language interface to query your entire traffic system. Ask about congestion, violations, predictions, and deployment priorities.</p>
+    </div>
+    <div class="copilot-layout">
+      <div class="chat-wrap reveal">
+        <div class="chat-top">
+          <div class="ai-orb">TV</div>
+          <div><div class="chat-name">TrafficVerse Copilot</div><div class="chat-status">● Online — processing 47 cameras</div></div>
+        </div>
+        <div class="chat-msgs" id="chat-msgs">
+          <div class="msg ai">Hello! I'm your Traffic Intelligence Copilot. I have access to live data from 47 cameras across Bengaluru. Ask me about violations, congestion, predictions, or enforcement priorities.</div>
+        </div>
+        <div class="chat-in">
+          <input class="chat-input" id="chat-in" type="text" placeholder="Ask anything about traffic…" onkeydown="if(event.key==='Enter')sendChat()">
+          <button class="chat-send" onclick="sendChat()">➤</button>
+        </div>
+      </div>
+      <div class="quick-side reveal">
+        <div class="qs-label">Quick prompts</div>
+        <div id="qp-list"></div>
+        <div class="sys-status" style="margin-top:1rem">
+          <div class="qs-label" style="margin-bottom:0.75rem">System status</div>
+          <div class="ss-row"><span class="ss-key">YOLOv11x Model</span><span class="ss-val" style="color:var(--c2)">● Running</span></div>
+          <div class="ss-row"><span class="ss-key">ByteTrack</span><span class="ss-val" style="color:var(--c2)">● Active</span></div>
+          <div class="ss-row"><span class="ss-key">PaddleOCR</span><span class="ss-val" style="color:var(--c2)">● Ready</span></div>
+          <div class="ss-row"><span class="ss-key">Evidence DB</span><span class="ss-val" style="color:var(--c2)">● Synced</span></div>
+          <div class="ss-row"><span class="ss-key">Cameras online</span><span class="ss-val" style="color:var(--c0)">47 / 52</span></div>
+          <div class="ss-row"><span class="ss-key">Avg latency</span><span class="ss-val" style="color:var(--c0)">2.1 ms</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EVIDENCE -->
+<section id="evidence">
+  <div class="section-wrap">
+    <div class="reveal" style="margin-bottom:3rem">
+      <div class="s-label">Evidence generation</div>
+      <h2 class="s-title">Auto-generated<br><strong>legal evidence</strong></h2>
+      <p class="s-desc">Every violation triggers instant evidence — annotated images, QR-signed PDFs, and GPS-verified documents ready for court in under 100ms.</p>
+    </div>
+    <div class="ev-card reveal">
+      <div class="ev-thumb"><canvas id="ev-canvas"></canvas></div>
+      <div>
+        <div class="ev-id">EVD-2024-BLR-047821</div>
+        <div class="ev-type">Helmet Violation + Triple Riding</div>
+        <div class="ev-meta">
+          <div class="em-item"><div class="em-k">Timestamp</div><div class="em-v">15 Jan 2024, 08:47:23</div></div>
+          <div class="em-item"><div class="em-k">Location</div><div class="em-v">MG Road Junction</div></div>
+          <div class="em-item"><div class="em-k">Camera ID</div><div class="em-v">CAM-MG-047</div></div>
+          <div class="em-item"><div class="em-k">Vehicle</div><div class="em-v">KA 03 MX 1234</div></div>
+          <div class="em-item"><div class="em-k">Type</div><div class="em-v">Honda Activa (Black)</div></div>
+          <div class="em-item"><div class="em-k">Confidence</div><div class="em-v">97.3% / 89.1%</div></div>
+          <div class="em-item"><div class="em-k">GPS</div><div class="em-v">12.9756°N, 77.6011°E</div></div>
+          <div class="em-item"><div class="em-k">Officer</div><div class="em-v">PSI Ravi Kumar (KA-847)</div></div>
+          <div class="em-item"><div class="em-k">QR verified</div><div class="em-v">✓ Authentic</div></div>
+        </div>
+        <div class="ev-actions">
+          <div class="fine-pill">💰 ₹1,000</div>
+          <button class="ev-dl" onclick="alert('Evidence PDF downloaded!')">⬇ Download PDF</button>
+          <button class="ev-snd" onclick="alert('Challan sent!')">📱 Send challan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- OFFICER -->
+<section id="officer">
+  <div class="section-wrap">
+    <div class="reveal" style="margin-bottom:3rem">
+      <div class="s-label">Field operations</div>
+      <h2 class="s-title">Officer<br><strong>command panel</strong></h2>
+      <p class="s-desc">Real-time officer deployment, violation assignments, route optimisation, and evidence download.</p>
+    </div>
+    <div class="officer-grid">
+      <div class="off-card reveal">
+        <div class="off-head">
+          <div class="off-avatar" style="background:linear-gradient(135deg,var(--c0),var(--c1))">RK</div>
+          <div><div class="off-name">PSI Ravi Kumar</div><div class="off-badge-txt">Badge: KA-847 · MG Road Beat</div></div>
+          <span class="status-pill active">On duty</span>
+        </div>
+        <div class="off-stats">
+          <div class="os"><div class="os-n">23</div><div class="os-l">Challans today</div></div>
+          <div class="os"><div class="os-n">₹18K</div><div class="os-l">Fines issued</div></div>
+          <div class="os"><div class="os-n">4.8★</div><div class="os-l">Rating</div></div>
+        </div>
+        <div style="font-size:.68rem;font-family:var(--font-m);text-transform:uppercase;letter-spacing:.08em;color:var(--t2);margin-bottom:.6rem">Nearby violations</div>
+        <div class="nearby-item"><div class="nb-dot" style="background:var(--c3)"></div><span>Helmet violation — KA 03 MX 1234</span><span class="nb-dist">0.2 km</span></div>
+        <div class="nearby-item"><div class="nb-dot" style="background:var(--c4)"></div><span>Illegal parking — 3 vehicles</span><span class="nb-dist">0.4 km</span></div>
+        <div class="nearby-item"><div class="nb-dot" style="background:var(--c1)"></div><span>Wrong-side driving detected</span><span class="nb-dist">0.7 km</span></div>
+      </div>
+      <div class="off-card reveal">
+        <div class="off-head">
+          <div class="off-avatar" style="background:linear-gradient(135deg,var(--c1),#ec4899)">SP</div>
+          <div><div class="off-name">ASI Sunita Patil</div><div class="off-badge-txt">Badge: KA-923 · Brigade Road Beat</div></div>
+          <span class="status-pill patrol">Patrolling</span>
+        </div>
+        <div class="off-stats">
+          <div class="os"><div class="os-n">17</div><div class="os-l">Challans today</div></div>
+          <div class="os"><div class="os-n">₹12K</div><div class="os-l">Fines issued</div></div>
+          <div class="os"><div class="os-n">4.6★</div><div class="os-l">Rating</div></div>
+        </div>
+        <div style="font-size:.68rem;font-family:var(--font-m);text-transform:uppercase;letter-spacing:.08em;color:var(--t2);margin-bottom:.6rem">Nearby violations</div>
+        <div class="nearby-item"><div class="nb-dot" style="background:var(--c4)"></div><span>Triple riding — KA 05 RT 7891</span><span class="nb-dist">0.1 km</span></div>
+        <div class="nearby-item"><div class="nb-dot" style="background:var(--c0)"></div><span>Stop line violation — Signal #3</span><span class="nb-dist">0.3 km</span></div>
+        <div class="nearby-item"><div class="nb-dot" style="background:var(--c3)"></div><span>No seatbelt — 2 vehicles</span><span class="nb-dist">0.6 km</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CITIZEN -->
+<section id="citizen">
+  <div class="section-wrap">
+    <div class="reveal" style="margin-bottom:3rem">
+      <div class="s-label">Community reporting</div>
+      <h2 class="s-title">Citizen<br><strong>Traffic Heroes</strong></h2>
+      <p class="s-desc">Citizens report violations and earn points. AI verifies authenticity. Top reporters get Traffic Hero badges.</p>
+    </div>
+    <div class="citizen-split">
+      <div class="report-card reveal">
+        <div style="font-size:.88rem;font-weight:500;margin-bottom:1rem">Report a violation</div>
+        <div class="report-drop" onclick="alert('Camera opened for citizen report!')">
+          <div style="font-size:2.5rem;opacity:.3;margin-bottom:.75rem">📸</div>
+          <div class="dz-text"><strong>Take a photo or upload</strong>AI verifies and awards points instantly</div>
+        </div>
+        <div class="reward-info">
+          <div class="ri-title">🎖 Reward system</div>
+          <div class="ri-grid">
+            <div class="ri-item">Helmet: <span>+50 pts</span></div>
+            <div class="ri-item">Wrong park: <span>+30 pts</span></div>
+            <div class="ri-item">Triple ride: <span>+40 pts</span></div>
+            <div class="ri-item">Wrong side: <span>+60 pts</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="leaderboard reveal">
+        <div class="lb-title">🏆 Traffic Heroes leaderboard</div>
+        <div class="lb-row"><div class="lb-rank g">1</div><div class="lb-avi" style="background:linear-gradient(135deg,#f59e0b,#d97706)">RJ</div><div class="lb-name">Rahul Joshi</div><div class="lb-pts">4,820 pts</div><span style="font-size:.85rem">🦸</span></div>
+        <div class="lb-row"><div class="lb-rank s">2</div><div class="lb-avi" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)">PS</div><div class="lb-name">Priya Sharma</div><div class="lb-pts">3,940 pts</div><span style="font-size:.85rem">⭐</span></div>
+        <div class="lb-row"><div class="lb-rank b">3</div><div class="lb-avi" style="background:linear-gradient(135deg,#10b981,#059669)">AK</div><div class="lb-name">Amit Kumar</div><div class="lb-pts">3,210 pts</div></div>
+        <div class="lb-row"><div class="lb-rank" style="color:var(--t2)">4</div><div class="lb-avi" style="background:linear-gradient(135deg,#ef4444,#dc2626)">NR</div><div class="lb-name">Neha Reddy</div><div class="lb-pts">2,780 pts</div></div>
+        <div class="lb-row"><div class="lb-rank" style="color:var(--t2)">5</div><div class="lb-avi" style="background:linear-gradient(135deg,#0088ff,#7c3aed)">SK</div><div class="lb-name">Sanjay K.</div><div class="lb-pts">2,340 pts</div></div>
+        <div class="lb-row"><div class="lb-rank" style="color:var(--t2)">6</div><div class="lb-avi" style="background:linear-gradient(135deg,#ec4899,#be185d)">DM</div><div class="lb-name">Divya Mehta</div><div class="lb-pts">1,890 pts</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">TrafficVerse AI</div>
+    <div class="footer-sub">Digital Twin for Intelligent Traffic Enforcement · Flipkart Gridlock Hackathon 2024</div>
+    <div class="footer-grid">
+      <div class="footer-stat"><div class="fs-icon">🤖</div><div class="fs-val">● Online</div><div class="fs-lbl">AI System</div></div>
+      <div class="footer-stat"><div class="fs-icon">⚡</div><div class="fs-val">● Active</div><div class="fs-lbl">GPU Inference</div></div>
+      <div class="footer-stat"><div class="fs-icon">📷</div><div class="fs-val">47 / 52</div><div class="fs-lbl">Cameras Live</div></div>
+      <div class="footer-stat"><div class="fs-icon">🌆</div><div class="fs-val">Bengaluru</div><div class="fs-lbl">City Pilot</div></div>
+      <div class="footer-stat"><div class="fs-icon">🔖</div><div class="fs-val">v2.0.0</div><div class="fs-lbl">Version</div></div>
+    </div>
+    <div class="footer-bottom">
+      <div class="tech-pills">
+        <span class="tp">YOLOv11x</span><span class="tp">ByteTrack</span><span class="tp">PaddleOCR</span><span class="tp">FastAPI</span><span class="tp">Three.js</span><span class="tp">Next.js</span><span class="tp">PostgreSQL</span><span class="tp">Redis</span><span class="tp">Docker</span>
+      </div>
+      <div class="footer-copy">Making Indian roads safer · One detection at a time</div>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════
+//  CURSOR
+// ═══════════════════════════════════════════════
+const cur=document.getElementById('cursor'),ring=document.getElementById('cursor-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px'});
+(function animCursor(){rx+=(mx-rx)*.15;ry+=(my-ry)*.15;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(animCursor)})();
+document.querySelectorAll('a,button,.t-btn,.d-btn,.qp-btn,.drop-zone,.report-drop').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{cur.style.width='6px';cur.style.height='6px';ring.style.width='52px';ring.style.height='52px';ring.style.borderColor='rgba(0,212,255,.6)'});
+  el.addEventListener('mouseleave',()=>{cur.style.width='10px';cur.style.height='10px';ring.style.width='36px';ring.style.height='36px';ring.style.borderColor='rgba(0,212,255,.4)'});
+});
+
+// ═══════════════════════════════════════════════
+//  LOADER
+// ═══════════════════════════════════════════════
+const bar=document.getElementById('lbar'),ltxt=document.getElementById('ltext');
+const msgs=['Initialising neural pipeline...','Loading YOLOv11x weights...','Connecting to 47 cameras...','Building digital twin...','Ready.'];
+let prog=0,mi=0;
+const iv=setInterval(()=>{
+  prog+=Math.random()*4+2;
+  if(prog>100)prog=100;
+  bar.style.width=prog+'%';
+  ltxt.textContent=msgs[Math.min(mi++,msgs.length-1)];
+  if(prog>=100){clearInterval(iv);setTimeout(()=>{document.getElementById('loader').classList.add('done');startHeroCounters()},400)}
+},80);
+
+// ═══════════════════════════════════════════════
+//  NAV SCROLL
+// ═══════════════════════════════════════════════
+const nav=document.getElementById('nav');
+let lastY=0;
+window.addEventListener('scroll',()=>{
+  const y=window.scrollY;
+  nav.classList.toggle('scrolled',y>50);
+  nav.classList.toggle('hidden',y>lastY&&y>200);
+  lastY=y;
+});
+
+// ═══════════════════════════════════════════════
+//  HERO PARTICLE CANVAS
+// ═══════════════════════════════════════════════
+const hc=document.getElementById('hero-canvas');
+const hCtx=hc.getContext('2d');
+function resizeHC(){hc.width=window.innerWidth;hc.height=window.innerHeight}
+resizeHC();window.addEventListener('resize',resizeHC);
+
+const STARS=Array.from({length:200},()=>({x:Math.random()*2000-1000,y:Math.random()*2000-1000,z:Math.random()*1000,speed:Math.random()*.5+.2}));
+const PARTICLES=Array.from({length:80},()=>({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,r:Math.random()*1.5+.5,a:Math.random()*.3+.05,col:Math.random()>.7?'0,212,255':'124,58,237'}));
+const CARS=Array.from({length:20},()=>({x:Math.random()*window.innerWidth,y:window.innerHeight*.4+Math.random()*(window.innerHeight*.4),vx:(Math.random()-.5)*2,color:['#00d4ff','#7c3aed','#00ff88','#ffaa00'][Math.floor(Math.random()*4)]}));
+let hFrame=0,t=0;
+
+function drawHero(){
+  hCtx.clearRect(0,0,hc.width,hc.height);
+  t+=0.003;
+
+  // Aurora background
+  const aurora1=hCtx.createRadialGradient(hc.width*.3,hc.height*.6,0,hc.width*.3,hc.height*.6,hc.width*.6);
+  aurora1.addColorStop(0,'rgba(0,90,180,0.18)');aurora1.addColorStop(1,'rgba(0,0,0,0)');
+  hCtx.fillStyle=aurora1;hCtx.fillRect(0,0,hc.width,hc.height);
+  const aurora2=hCtx.createRadialGradient(hc.width*.7,hc.height*.4,0,hc.width*.7,hc.height*.4,hc.width*.5);
+  aurora2.addColorStop(0,`rgba(80,0,180,${0.1+Math.sin(t)*0.04})`);aurora2.addColorStop(1,'rgba(0,0,0,0)');
+  hCtx.fillStyle=aurora2;hCtx.fillRect(0,0,hc.width,hc.height);
+
+  // Stars
+  const cx=hc.width/2,cy=hc.height/2;
+  STARS.forEach(s=>{
+    s.z-=s.speed;
+    if(s.z<=0)s.z=1000;
+    const sx=cx+(s.x/s.z)*200,sy=cy+(s.y/s.z)*200;
+    const r=Math.max(.3,(1-s.z/1000)*2.5);
+    hCtx.beginPath();hCtx.arc(sx,sy,r,0,Math.PI*2);
+    hCtx.fillStyle=`rgba(200,220,255,${(1-s.z/1000)*.7})`;hCtx.fill();
+  });
+
+  // Neon grid (perspective)
+  hCtx.strokeStyle='rgba(0,180,255,0.04)';hCtx.lineWidth=.5;
+  const gh=hc.height*.6,gw=hc.width;
+  for(let i=-20;i<=20;i++){
+    const xi=gw/2+i*60;
+    hCtx.beginPath();hCtx.moveTo(xi,gh);hCtx.lineTo(gw/2+i*400,hc.height+200);hCtx.stroke();
+  }
+  for(let d=0;d<20;d++){
+    const p=d/20,y=gh+p*(hc.height-gh+200);
+    const spread=p*800;
+    hCtx.globalAlpha=.05*(1-p);
+    hCtx.beginPath();hCtx.moveTo(gw/2-spread,y);hCtx.lineTo(gw/2+spread,y);hCtx.stroke();
+    hCtx.globalAlpha=1;
+  }
+
+  // Moving vehicles on roads
+  CARS.forEach(v=>{
+    v.x+=v.vx;
+    if(v.x>hc.width+20)v.x=-20;if(v.x<-20)v.x=hc.width+20;
+    hCtx.beginPath();hCtx.arc(v.x,v.y,3.5,0,Math.PI*2);
+    hCtx.fillStyle=v.color;hCtx.fill();
+    hCtx.beginPath();hCtx.arc(v.x,v.y,6,0,Math.PI*2);
+    hCtx.fillStyle=v.color.replace('#','rgba(').replace(')',',0.2)').replace('rgba(','rgba(').replace('00d4ff','0,212,255').replace('7c3aed','124,58,237').replace('00ff88','0,255,136').replace('ffaa00','255,170,0');
+    hCtx.fillStyle=`${v.color}22`;hCtx.fill();
+  });
+
+  // Particles + connections
+  PARTICLES.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>hc.width)p.vx*=-1;if(p.y<0||p.y>hc.height)p.vy*=-1});
+  for(let i=0;i<PARTICLES.length;i++)for(let j=i+1;j<PARTICLES.length;j++){
+    const dx=PARTICLES[i].x-PARTICLES[j].x,dy=PARTICLES[i].y-PARTICLES[j].y;
+    const d=Math.sqrt(dx*dx+dy*dy);
+    if(d<100){hCtx.beginPath();hCtx.strokeStyle=`rgba(${PARTICLES[i].col},${0.06*(1-d/100)})`;hCtx.lineWidth=.5;hCtx.moveTo(PARTICLES[i].x,PARTICLES[i].y);hCtx.lineTo(PARTICLES[j].x,PARTICLES[j].y);hCtx.stroke()}
+  }
+  PARTICLES.forEach(p=>{hCtx.beginPath();hCtx.arc(p.x,p.y,p.r,0,Math.PI*2);hCtx.fillStyle=`rgba(${p.col},${p.a})`;hCtx.fill()});
+
+  hFrame++;requestAnimationFrame(drawHero);
+}
+
+// ═══════════════════════════════════════════════
+//  HERO COUNTERS
+// ═══════════════════════════════════════════════
+function startHeroCounters(){
+  drawHero();
+  [{id:'hm1',t:12847,d:0,s:''},{id:'hm2',t:98.3,d:1,s:'%'},{id:'hm3',t:47,d:0,s:''},{id:'hm4',t:2.1,d:1,s:'ms'}].forEach(({id,t,d,s})=>{
+    const el=document.getElementById(id);
+    const dur=2000,st=performance.now();
+    (function tick(now){
+      const p=Math.min((now-st)/dur,1);
+      const v=t*(1-Math.pow(1-p,3));
+      el.textContent=(d?v.toFixed(d):Math.round(v))+s;
+      if(p<1)requestAnimationFrame(tick);
+    })(performance.now());
+  });
+}
+
+// ═══════════════════════════════════════════════
+//  3D CITY TWIN
+// ═══════════════════════════════════════════════
+const tc=document.getElementById('twin-canvas');
+const tCtx=tc.getContext('2d');
+let camA=0.4,camP=0.55,camZ=1,tDrag=false,tLast={x:0,y:0},tLayer='all',tF=0;
+
+function resizeTC(){tc.width=tc.offsetWidth;tc.height=tc.offsetHeight}
+resizeTC();new ResizeObserver(resizeTC).observe(tc);
+
+tc.addEventListener('mousedown',e=>{tDrag=true;tLast={x:e.clientX,y:e.clientY}});
+document.addEventListener('mousemove',e=>{if(!tDrag)return;camA+=(e.clientX-tLast.x)*.005;camP=Math.max(.1,Math.min(1.3,camP+(e.clientY-tLast.y)*.005));tLast={x:e.clientX,y:e.clientY}});
+document.addEventListener('mouseup',()=>tDrag=false);
+tc.addEventListener('wheel',e=>{camZ=Math.max(.4,Math.min(2.8,camZ-e.deltaY*.001));e.preventDefault()},{passive:false});
+
+function proj(x,y,z){
+  const ca=Math.cos(camA),sa=Math.sin(camA);
+  const rx=x*ca-z*sa,rz=x*sa+z*ca;
+  const cp=Math.cos(camP);
+  return{px:tc.width/2+rx*camZ,py:tc.height/2+(rz*cp-y*.7)*camZ};
+}
+
+const ROADS_DEF=[
+  {x1:-200,z1:0,x2:200,z2:0,w:14,risk:.92},
+  {x1:0,z1:-200,x2:0,z2:200,w:14,risk:.78},
+  {x1:-150,z1:-80,x2:150,z2:-80,w:9,risk:.85},
+  {x1:-150,z1:80,x2:150,z2:80,w:9,risk:.61},
+  {x1:-80,z1:-200,x2:-80,z2:200,w:7},
+  {x1:80,z1:-200,x2:80,z2:200,w:7},
+];
+const BLDGS=[];
+for(let i=0;i<65;i++){
+  const bx=(Math.random()-.5)*360,bz=(Math.random()-.5)*360;
+  const near=ROADS_DEF.some(r=>Math.abs(r.x1-r.x2)<5?Math.abs(bx-r.x1)<r.w+14:Math.abs(bz-r.z1)<r.w+14);
+  if(!near)BLDGS.push({x:bx,z:bz,h:Math.random()*65+15,w:Math.random()*24+10,d:Math.random()*24+10,t:Math.floor(Math.random()*3)});
+}
+const VCARS=Array.from({length:45},()=>{
+  const onH=Math.random()>.5;
+  return{x:onH?(Math.random()-.5)*380:[-200,-80,0,80,200][Math.floor(Math.random()*5)],z:onH?[-200,-80,0,80,200][Math.floor(Math.random()*5)]:(Math.random()-.5)*380,dx:onH?(Math.random()>.5?1.8:-1.8):0,dz:onH?0:(Math.random()>.5?1.8:-1.8),type:Math.floor(Math.random()*3),viol:Math.random()<.22?Math.floor(Math.random()*4):-1,ph:Math.random()*6.28};
+});
+const CAMS=[{x:0,z:0},{x:-200,z:0},{x:200,z:0},{x:0,z:-200},{x:0,z:200},{x:-80,z:-80},{x:80,z:-80},{x:-80,z:80},{x:80,z:80}];
+const VIOLS=Array.from({length:15},()=>({x:(Math.random()-.5)*320,z:(Math.random()-.5)*320,ph:Math.random()*6.28}));
+
+const BCOLS=[['#0d1f3a','#0a1628'],['#1a0d3a','#130a28'],['#1a1500','#110e00']];
+
+function drawCity(){
+  tCtx.clearRect(0,0,tc.width,tc.height);
+  tCtx.fillStyle='#02060e';tCtx.fillRect(0,0,tc.width,tc.height);
+
+  // Grid
+  tCtx.strokeStyle='rgba(0,212,255,.03)';tCtx.lineWidth=.5;
+  for(let i=-300;i<=300;i+=25){
+    const a=proj(i,0,-300),b=proj(i,0,300),c=proj(-300,0,i),d=proj(300,0,i);
+    tCtx.beginPath();tCtx.moveTo(a.px,a.py);tCtx.lineTo(b.px,b.py);tCtx.stroke();
+    tCtx.beginPath();tCtx.moveTo(c.px,c.py);tCtx.lineTo(d.px,d.py);tCtx.stroke();
+  }
+
+  // Roads
+  if(tLayer==='all'||tLayer==='traffic'||tLayer==='violations'){
+    ROADS_DEF.forEach(r=>{
+      const a=proj(r.x1,0,r.z1),b=proj(r.x2,0,r.z2);
+      if(tLayer==='heatmap'){const h=Math.round(255*(r.risk||.5)),g=Math.round(40*(1-(r.risk||.5)));tCtx.strokeStyle=`rgba(${h},${g},0,.7)`}
+      else tCtx.strokeStyle='rgba(14,34,64,.95)';
+      tCtx.lineWidth=r.w*camZ*.8;tCtx.beginPath();tCtx.moveTo(a.px,a.py);tCtx.lineTo(b.px,b.py);tCtx.stroke();
+      tCtx.strokeStyle='rgba(40,70,110,.4)';tCtx.lineWidth=.8;tCtx.setLineDash([12,8]);
+      tCtx.beginPath();tCtx.moveTo(a.px,a.py);tCtx.lineTo(b.px,b.py);tCtx.stroke();tCtx.setLineDash([]);
+    });
+  }
+
+  // Buildings
+  if(tLayer==='all'||tLayer==='traffic'){
+    [...BLDGS].sort((a,b)=>proj(a.x,0,a.z).py-proj(b.x,0,b.z).py).forEach(b=>{
+      const c=BCOLS[b.t];
+      const p=[proj(b.x-b.w/2,0,b.z-b.d/2),proj(b.x+b.w/2,0,b.z-b.d/2),proj(b.x+b.w/2,0,b.z+b.d/2),proj(b.x-b.w/2,0,b.z+b.d/2)];
+      const top=[proj(b.x-b.w/2,b.h,b.z-b.d/2),proj(b.x+b.w/2,b.h,b.z-b.d/2),proj(b.x+b.w/2,b.h,b.z+b.d/2),proj(b.x-b.w/2,b.h,b.z+b.d/2)];
+      tCtx.fillStyle=c[0];tCtx.strokeStyle='rgba(0,212,255,.05)';tCtx.lineWidth=.4;
+      tCtx.beginPath();tCtx.moveTo(p[0].px,p[0].py);tCtx.lineTo(p[1].px,p[1].py);tCtx.lineTo(top[1].px,top[1].py);tCtx.lineTo(top[0].px,top[0].py);tCtx.closePath();tCtx.fill();tCtx.stroke();
+      tCtx.fillStyle=c[1];tCtx.beginPath();tCtx.moveTo(p[1].px,p[1].py);tCtx.lineTo(p[2].px,p[2].py);tCtx.lineTo(top[2].px,top[2].py);tCtx.lineTo(top[1].px,top[1].py);tCtx.closePath();tCtx.fill();tCtx.stroke();
+      tCtx.fillStyle='#0f1e38';tCtx.beginPath();top.forEach((t,i)=>i?tCtx.lineTo(t.px,t.py):tCtx.moveTo(t.px,t.py));tCtx.closePath();tCtx.fill();tCtx.stroke();
+      if(b.h>25){for(let wy=b.h*.2;wy<b.h*.88;wy+=7){for(let wx=.1;wx<.9;wx+=.16){if(Math.random()>.35){const wp=proj(b.x-b.w/2+b.w*wx,wy,b.z-b.d/2);tCtx.fillStyle=`rgba(${140+Math.random()*100},${170+Math.random()*80},255,${.35+Math.random()*.45})`;tCtx.fillRect(wp.px-1.5,wp.py-1.5,3,2)}}}}
+    });
+  }
+
+  // Vehicles
+  VCARS.forEach(v=>{
+    v.x+=v.dx*.28;v.z+=v.dz*.28;
+    if(v.x>200)v.x=-200;if(v.x<-200)v.x=200;if(v.z>200)v.z=-200;if(v.z<-200)v.z=200;
+    if(tLayer!=='all'&&tLayer!=='traffic'&&tLayer!=='violations')return;
+    if(tLayer==='violations'&&v.viol<0)return;
+    const p=proj(v.x,2,v.z);
+    const vCols=['#00d4ff','#0088ff','#7c3aed'];
+    const isV=v.viol>=0;
+    tCtx.beginPath();tCtx.arc(p.px,p.py,4*camZ,0,Math.PI*2);
+    tCtx.fillStyle=isV?'#ff3366':vCols[v.type];tCtx.fill();
+    if(isV){
+      tCtx.beginPath();tCtx.arc(p.px,p.py,(6+Math.sin(tF*.1+v.ph)*2)*camZ,0,Math.PI*2);
+      tCtx.strokeStyle='rgba(255,51,102,.5)';tCtx.lineWidth=1;tCtx.stroke();
+    }
+  });
+
+  // Cameras
+  if(tLayer==='all'||tLayer==='police'){
+    CAMS.forEach(cam=>{
+      const p=proj(cam.x,8,cam.z);
+      tCtx.beginPath();tCtx.arc(p.px,p.py,5*camZ,0,Math.PI*2);tCtx.fillStyle='#7c3aed';tCtx.fill();
+      tCtx.beginPath();tCtx.arc(p.px,p.py,(8+Math.sin(tF*.05)*3)*camZ,0,Math.PI*2);
+      tCtx.strokeStyle='rgba(124,58,237,.3)';tCtx.lineWidth=1;tCtx.stroke();
+    });
+  }
+
+  // Violations
+  if(tLayer==='all'||tLayer==='violations'||tLayer==='heatmap'){
+    VIOLS.forEach(v=>{
+      v.ph+=.04;
+      const p=proj(v.x,0,v.z);
+      tCtx.beginPath();tCtx.arc(p.px,p.py,(7+Math.sin(v.ph)*3)*camZ,0,Math.PI*2);
+      tCtx.fillStyle=`rgba(255,51,102,${.3+Math.sin(v.ph)*.15})`;tCtx.fill();
+      tCtx.beginPath();tCtx.arc(p.px,p.py,(14+Math.sin(v.ph)*4)*camZ,0,Math.PI*2);
+      tCtx.strokeStyle='rgba(255,51,102,.15)';tCtx.lineWidth=1;tCtx.stroke();
+    });
+  }
+
+  // Parking
+  if(tLayer==='all'||tLayer==='parking'){
+    [[60,-40],[120,60],[-60,90]].forEach(([x,z])=>{
+      const p=proj(x,0,z);
+      tCtx.fillStyle=`rgba(255,170,0,${.4+Math.sin(tF*.08)*0.2})`;
+      tCtx.fillRect(p.px-5,p.py-3,10,6);
+    });
+  }
+
+  // Police
+  if(tLayer==='all'||tLayer==='police'){
+    [[100,50],[-100,-50],[-50,100]].forEach(([x,z])=>{
+      const p=proj(x,3,z);
+      tCtx.beginPath();tCtx.arc(p.px,p.py,5*camZ,0,Math.PI*2);tCtx.fillStyle='#00ff88';tCtx.fill();
+    });
+  }
+
+  // Heatmap
+  if(tLayer==='heatmap'){
+    const g=tCtx.createRadialGradient(tc.width*.4,tc.height*.45,0,tc.width*.4,tc.height*.45,180);
+    g.addColorStop(0,'rgba(255,60,0,.18)');g.addColorStop(.5,'rgba(255,120,0,.06)');g.addColorStop(1,'rgba(0,0,0,0)');
+    tCtx.fillStyle=g;tCtx.fillRect(0,0,tc.width,tc.height);
+  }
+
+  tF++;requestAnimationFrame(drawCity);
+}
+drawCity();
+
+function setLayer(l,btn){
+  tLayer=l;
+  document.querySelectorAll('.t-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+// Timeline
+const tlRange=document.getElementById('tl-range');
+const tlDisp=document.getElementById('tl-disp');
+const tlTimes=['06:00 AM','06:30 AM','07:00 AM','07:30 AM','08:00 AM','08:30 AM','09:00 AM','09:30 AM','10:00 AM','10:30 AM','11:00 AM','11:30 AM','12:00 PM'];
+tlRange.addEventListener('input',function(){
+  this.style.setProperty('--p',this.value+'%');
+  tlDisp.textContent=tlTimes[Math.floor(this.value/100*12)];
+});
+
+// ═══════════════════════════════════════════════
+//  DETECTION CANVAS
+// ═══════════════════════════════════════════════
+const dc=document.getElementById('det-canvas');
+const dCtx=dc.getContext('2d');
+let dF=0;
+const DBOXES=[
+  {x:.12,y:.08,w:.32,h:.72,label:'Bike — No Helmet',color:'#ff3366',conf:97},
+  {x:.54,y:.18,w:.36,h:.62,label:'Car — Seatbelt OK',color:'#00ff88',conf:91},
+];
+
+function drawDetection(){
+  dc.width=dc.offsetWidth||400;dc.height=220;
+  const W=dc.width,H=dc.height;
+  dCtx.fillStyle='#02060e';dCtx.fillRect(0,0,W,H);
+  dCtx.fillStyle='#0a1525';dCtx.fillRect(0,H*.45,W,H*.55);
+  for(let i=0;i<5;i++){dCtx.fillStyle='rgba(40,70,110,.35)';dCtx.fillRect(W*.08+i*W*.21,H*.48,W*.14,6)}
+  const scanY=((Math.sin(dF*.05)+1)/2)*H;
+  const sg=dCtx.createLinearGradient(0,scanY-10,0,scanY+10);
+  sg.addColorStop(0,'rgba(0,212,255,0)');sg.addColorStop(.5,'rgba(0,212,255,.1)');sg.addColorStop(1,'rgba(0,212,255,0)');
+  dCtx.fillStyle=sg;dCtx.fillRect(0,scanY-10,W,20);
+  DBOXES.forEach(b=>{
+    const x=b.x*W,y=b.y*H,w=b.w*W,h=b.h*H;
+    const cs=11,al=.6+.4*Math.sin(dF*.025);
+    dCtx.strokeStyle=b.color;dCtx.lineWidth=2;dCtx.globalAlpha=al;
+    [[0,0,1,0,0,1],[w,0,-1,0,0,1],[0,h,1,0,0,-1],[w,h,-1,0,0,-1]].forEach(([ox,oy,dx2,dy2,dx3,dy3])=>{
+      dCtx.beginPath();dCtx.moveTo(x+ox+dx2*cs,y+oy);dCtx.lineTo(x+ox,y+oy);dCtx.lineTo(x+ox,y+oy+dy3*cs);dCtx.stroke();
+    });
+    dCtx.globalAlpha=1;
+    dCtx.fillStyle=b.color+'22';dCtx.fillRect(x,y,w,h);
+    dCtx.font='bold 10px monospace';dCtx.fillStyle=b.color;dCtx.fillText(`${b.label} [${b.conf}%]`,x+4,y-5);
+  });
+  dCtx.globalAlpha=1;
+  dCtx.fillStyle='rgba(0,212,255,.7)';dCtx.font='10px monospace';
+  dCtx.fillText(`FPS: ${(34+Math.sin(dF*.1)).toFixed(1)}`,8,14);
+  dCtx.fillText(`Inference: 2.1ms`,8,26);
+  dF++;requestAnimationFrame(drawDetection);
+}
+drawDetection();
+
+function simulateDetection(){
+  const vl=document.getElementById('v-list');
+  const vs=[{l:'Helmet violation',c:'var(--c3)',p:97},{l:'Triple riding',c:'var(--c4)',p:89},{l:'No seatbelt',c:'var(--c1)',p:82},{l:'Red light',c:'var(--c0)',p:76},{l:'Stop line',c:'var(--c3)',p:71},{l:'Wrong side',c:'var(--c4)',p:68}];
+  const picked=vs.sort(()=>Math.random()-.5).slice(0,4);
+  vl.innerHTML=picked.map(v=>`<div class="v-item"><div class="v-left"><div class="v-dot" style="background:${v.c}"></div>${v.l}</div><div style="display:flex;align-items:center;gap:8px"><div class="v-bar-wrap"><div class="v-bar" style="width:${v.p}%;background:${v.c}"></div></div><span class="v-conf">${v.p}%</span></div></div>`).join('');
+  document.getElementById('fps-disp').textContent=`⚡ ${(30+Math.random()*8).toFixed(1)} FPS`;
+}
+
+function handleFile(){simulateDetection()}
+function clearDetect(){
+  document.getElementById('v-list').innerHTML='<div style="color:var(--t2);font-size:.8rem;padding:1rem;text-align:center">Upload an image to begin detection</div>';
+}
+
+// ═══════════════════════════════════════════════
+//  HEATMAP CANVAS
+// ═══════════════════════════════════════════════
+const hmC=document.getElementById('hmap-canvas');
+const hmCtx=hmC.getContext('2d');
+let hmF=0;
+const SPOTS=[
+  {x:.5,y:.4,r:.2,i:.92,lbl:'MG Road'},{x:.35,y:.55,r:.15,i:.75,lbl:'Brigade Rd'},
+  {x:.65,y:.6,r:.13,i:.62,lbl:'Silk Board'},{x:.2,y:.3,r:.11,i:.44,lbl:'Ring Road'},
+  {x:.75,y:.3,r:.1,i:.38,lbl:'ORR'},{x:.5,y:.72,r:.09,i:.31,lbl:'E-City'},
+  {x:.3,y:.7,r:.08,i:.25,lbl:'HSR Layout'}
+];
+
+function drawHeatmap(){
+  hmC.width=hmC.offsetWidth;hmC.height=hmC.offsetHeight||460;
+  const W=hmC.width,H=hmC.height;
+  hmCtx.fillStyle='#02060e';hmCtx.fillRect(0,0,W,H);
+  hmCtx.strokeStyle='rgba(20,50,90,.3)';hmCtx.lineWidth=.5;
+  for(let i=0;i<=10;i++){hmCtx.beginPath();hmCtx.moveTo(i*W/10,0);hmCtx.lineTo(i*W/10,H);hmCtx.stroke();hmCtx.beginPath();hmCtx.moveTo(0,i*H/10);hmCtx.lineTo(W,i*H/10);hmCtx.stroke()}
+  // Roads
+  [[.1,.4,.9,.4],[.5,.1,.5,.9],[.2,.25,.8,.25],[.2,.65,.8,.65],[.2,.1,.2,.9],[.8,.1,.8,.9]].forEach(([x1,y1,x2,y2])=>{hmCtx.strokeStyle='rgba(15,40,75,.9)';hmCtx.lineWidth=7;hmCtx.beginPath();hmCtx.moveTo(x1*W,y1*H);hmCtx.lineTo(x2*W,y2*H);hmCtx.stroke()});
+  // Hotspots
+  SPOTS.forEach(s=>{
+    s.ph=(s.ph||0)+.03;
+    const pulse=Math.sin(hmF*.03+s.i*4)*.08;
+    [s.r*(1+pulse),s.r*.65,s.r*.3].forEach((r,ri)=>{
+      const g=hmCtx.createRadialGradient(s.x*W,s.y*H,0,s.x*W,s.y*H,r*W);
+      const ir=Math.round(255*s.i),ig=Math.round(40*(1-s.i));
+      const alphas=[.1,.22,.5][ri];
+      g.addColorStop(0,`rgba(${ir},${ig},0,${alphas})`);g.addColorStop(1,'rgba(0,0,0,0)');
+      hmCtx.fillStyle=g;hmCtx.beginPath();hmCtx.arc(s.x*W,s.y*H,r*W,0,Math.PI*2);hmCtx.fill();
+    });
+    hmCtx.fillStyle=`rgba(255,${Math.round(180*(1-s.i))},0,.9)`;
+    hmCtx.font='bold 11px monospace';hmCtx.fillText(s.lbl,s.x*W+9,s.y*H-5);
+    hmCtx.font='9px monospace';hmCtx.fillText(Math.round(s.i*100),s.x*W+9,s.y*H+8);
+  });
+  // Legend
+  ['Low','Med','High','Critical'].forEach((lbl,i)=>{
+    const lx=20+i*78,ly=H-18;
+    const cols=['rgba(0,255,136,.7)','rgba(255,200,0,.7)','rgba(255,100,0,.7)','rgba(255,30,30,.7)'];
+    hmCtx.fillStyle=cols[i];hmCtx.fillRect(lx,ly-8,60,5);
+    hmCtx.fillStyle='rgba(200,220,255,.6)';hmCtx.font='9px monospace';hmCtx.fillText(lbl,lx,ly+8);
+  });
+  hmF++;requestAnimationFrame(drawHeatmap);
+}
+new ResizeObserver(()=>hmC.width=hmC.offsetWidth).observe(hmC);
+drawHeatmap();
+
+// ═══════════════════════════════════════════════
+//  CHARTS
+// ═══════════════════════════════════════════════
+Chart.defaults.color='#3d5878';Chart.defaults.borderColor='rgba(0,180,255,0.06)';
+Chart.defaults.font={family:"'Inter',sans-serif",size:11};
+
+const hrs=Array.from({length:24},(_,i)=>`${String(i).padStart(2,'0')}:00`);
+const vd=[12,8,6,4,3,2,5,28,62,85,74,68,92,78,65,70,82,91,67,45,31,24,18,14];
+new Chart(document.getElementById('trend-chart'),{type:'line',data:{labels:hrs,datasets:[{label:'Total',data:vd,borderColor:'#00d4ff',backgroundColor:'rgba(0,212,255,.05)',borderWidth:1.5,pointRadius:0,fill:true,tension:.4},{label:'Helmet',data:vd.map(v=>Math.round(v*.35)),borderColor:'#ff3366',backgroundColor:'rgba(255,51,102,.03)',borderWidth:1,pointRadius:0,fill:true,tension:.4}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:'#3d5878',boxWidth:8,padding:12}}},scales:{x:{grid:{color:'rgba(0,180,255,.04)'},ticks:{maxTicksLimit:8,color:'#3d5878'}},y:{grid:{color:'rgba(0,180,255,.04)'},ticks:{color:'#3d5878'}}}}});
+new Chart(document.getElementById('donut-chart'),{type:'doughnut',data:{labels:['Helmet','Parking','Triple Ride','Seatbelt','Red Light','Other'],datasets:[{data:[34,21,16,12,10,7],backgroundColor:['#ff3366','#ffaa00','#7c3aed','#0088ff','#00d4ff','#00ff88'],borderColor:'#060e1a',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'right',labels:{color:'#3d5878',boxWidth:8,padding:10,font:{size:10}}}},cutout:'68%'}});
+
+// Risk gauge
+const rg=document.getElementById('rgauge');
+const rgCtx=rg.getContext('2d');
+(function drawGauge(){
+  rgCtx.clearRect(0,0,220,130);
+  const cx2=110,cy2=115,r=82;
+  rgCtx.beginPath();rgCtx.arc(cx2,cy2,r,Math.PI,0);rgCtx.strokeStyle='rgba(255,255,255,.05)';rgCtx.lineWidth=14;rgCtx.lineCap='round';rgCtx.stroke();
+  const gg=rgCtx.createLinearGradient(28,cy2,192,cy2);
+  gg.addColorStop(0,'#00ff88');gg.addColorStop(.4,'#ffaa00');gg.addColorStop(1,'#ff3366');
+  rgCtx.beginPath();rgCtx.arc(cx2,cy2,r,Math.PI,Math.PI+Math.PI*.74);rgCtx.strokeStyle=gg;rgCtx.lineWidth=14;rgCtx.stroke();
+  const a2=Math.PI+Math.PI*.74;
+  rgCtx.beginPath();rgCtx.moveTo(cx2,cy2);rgCtx.lineTo(cx2+Math.cos(a2)*58,cy2+Math.sin(a2)*58);rgCtx.strokeStyle='#f0f6ff';rgCtx.lineWidth=2;rgCtx.stroke();
+  rgCtx.beginPath();rgCtx.arc(cx2,cy2,5,0,Math.PI*2);rgCtx.fillStyle='#f0f6ff';rgCtx.fill();
+})();
+
+// Zone rows
+const ZONES=[
+  {name:'MG Road',road:'Junction 1-4',score:92,col:'#ff3366'},
+  {name:'Brigade Road',road:'Commercial Zone',score:78,col:'#ffaa00'},
+  {name:'Silk Board',road:'Flyover Junction',score:85,col:'#ffaa00'},
+  {name:'Outer Ring Road',road:'Tech Corridor',score:61,col:'#00d4ff'},
+  {name:'Koramangala',road:'Residential Area',score:44,col:'#00ff88'},
+  {name:'Electronic City',road:'Industrial Zone',score:38,col:'#00ff88'},
+];
+const zr=document.getElementById('zone-rows');
+zr.innerHTML=ZONES.map(z=>`<div class="zone-row"><div class="zone-name-wrap"><div class="zone-name">${z.name}</div><div class="zone-road">${z.road}</div></div><div class="zone-bar-bg"><div class="zone-bar-f" style="width:${z.score}%;background:${z.col}"></div></div><div class="zone-score" style="color:${z.col}">${z.score}</div></div>`).join('');
+
+new Chart(document.getElementById('pred-chart'),{type:'line',data:{labels:['Now','15m','30m','45m','1h','1h15','1h30','1h45','2h'],datasets:[{label:'Actual',data:[74,null,null,null,null,null,null,null,null],borderColor:'#00d4ff',borderWidth:2,pointRadius:4,pointBackgroundColor:'#00d4ff'},{label:'Predicted',data:[74,78,82,88,91,87,83,78,74],borderColor:'#ff3366',backgroundColor:'rgba(255,51,102,.05)',borderWidth:1.5,borderDash:[5,3],pointRadius:3,fill:true,tension:.4}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:'#3d5878',boxWidth:8,font:{size:10}}}},scales:{x:{grid:{color:'rgba(0,180,255,.04)'},ticks:{color:'#3d5878',font:{size:10}}},y:{grid:{color:'rgba(0,180,255,.04)'},ticks:{color:'#3d5878'},min:60,max:100}}}});
+
+// ═══════════════════════════════════════════════
+//  COPILOT
+// ═══════════════════════════════════════════════
+const QPS=['Why is MG Road congested right now?','Top helmet violation zones today','Which area needs enforcement urgently?','Predict congestion next hour','Today vs yesterday violations','Generate enforcement report'];
+const qpl=document.getElementById('qp-list');
+qpl.innerHTML=QPS.map(q=>`<button class="qp-btn" onclick="askCopilot('${q}')">${q}</button>`).join('');
+
+const RESP={
+  'mg road':`**MG Road Analysis — Live:**\n\nRisk score: 92/100 (CRITICAL)\nActive violations: 14 in last 15 min\n\nHelmet: 7 · Parking: 4 · Triple riding: 2 · Stop-line: 1\n\nRoot cause: Peak-hour flow + metro construction reducing road width 30%.\n\nRecommend 3 additional officers to junctions 2 and 4 immediately.`,
+  'helmet':`**Helmet Violation Hotspots Today:**\n\n1. MG Road — 247 violations\n2. Brigade Road — 184 violations\n3. Silk Board — 156 violations\n4. Koramangala 5th Block — 121 violations\n5. Indiranagar — 98 violations\n\nTotal: 847 violations · Fines: ₹8.47L\n\nDeploy officers to zones 1 & 3 during 5–7 PM.`,
+  'enforcement':`**Urgent Priorities:**\n\n🚨 MG Road J2: Wrong-side spike (+340% above baseline)\n⚠ Brigade Rd: 14 illegally parked — emergency lane blocked\n⚠ Silk Board: Triple riding cluster — 11 incidents/20min\n\nActions: 3 units to MG Road + tow truck to Brigade Rd + 1 unit to Silk Board.`,
+  'predict':`**Congestion Forecast — Next 2 Hours:**\n\n09:00 — Risk 91 (CRITICAL) · Silk Board + MG Road peak\n09:30 — Risk 87 (HIGH) · ORR joins congestion\n10:00 — Risk 83 (HIGH) · Brigade-MG bottleneck\n10:30 — Risk 74 (MODERATE) · Gradual relief\n\nPre-emptive signal optimisation + officer deployment → -23% peak congestion.`,
+  'today':`**Today vs Yesterday:**\n\nViolations: 2,847 (+12.4%) ↑\nHelmet: 847 (+18.7%) ↑\nParking: 598 (+3.2%) ↑\nTriple riding: 456 (−2.1%) ↓\nFines: ₹14.2L (+₹1.1L)\nEvidence quality: 91.2% (+1.4%)\n\nBest zone: Electronic City (−14%)\nWorst zone: MG Road (+34%)`,
+  'report':`**November 2024 Enforcement Report:**\n\nTotal violations: 89,420\nFines issued: ₹44.7L\nEvidence quality: 90.8%\nOfficer efficiency: 87.3%\n\nTop violation: Helmet (38%)\nMost improved: Electronic City (−14%)\n\n✅ PDF ready for download.`,
+  'default':`**Live City Status:**\n\nCity risk score: 74/100 (HIGH)\nViolations last 15 min: 23\nBusiest zone: MG Road (92)\nOfficers deployed: 12/18\nPredicted peak: 09:15 AM\n\nAsk me about specific zones, violations, or deployment priorities.`
+};
+
+function getResp(q){
+  const l=q.toLowerCase();
+  if(l.includes('mg road')||l.includes('congested'))return RESP['mg road'];
+  if(l.includes('helmet'))return RESP['helmet'];
+  if(l.includes('enforcement')||l.includes('urgent'))return RESP['enforcement'];
+  if(l.includes('predict')||l.includes('next hour'))return RESP['predict'];
+  if(l.includes('today')||l.includes('yesterday'))return RESP['today'];
+  if(l.includes('report'))return RESP['report'];
+  return RESP['default'];
+}
+
+function addMsg(text,role){
+  const msgs=document.getElementById('chat-msgs');
+  const d=document.createElement('div');d.className=`msg ${role}`;
+  d.innerHTML=text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+  msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
+}
+
+function askCopilot(q){document.getElementById('chat-in').value=q;sendChat()}
+
+function sendChat(){
+  const inp=document.getElementById('chat-in');
+  const q=inp.value.trim();if(!q)return;
+  addMsg(q,'user');inp.value='';
+  const msgs=document.getElementById('chat-msgs');
+  const td=document.createElement('div');td.className='msg ai';td.id='typing-ind';
+  td.innerHTML='<div class="typing"><div class="td"></div><div class="td"></div><div class="td"></div></div>';
+  msgs.appendChild(td);msgs.scrollTop=msgs.scrollHeight;
+  setTimeout(()=>{const t=document.getElementById('typing-ind');if(t)t.remove();addMsg(getResp(q),'ai')},1100+Math.random()*500);
+}
+
+// ═══════════════════════════════════════════════
+//  EVIDENCE CANVAS
+// ═══════════════════════════════════════════════
+const evc=document.getElementById('ev-canvas');
+const evCtx=evc.getContext('2d');
+function drawEvidence(){
+  evc.width=evc.offsetWidth;evc.height=evc.offsetHeight||180;
+  const W=evc.width,H=evc.height;
+  evCtx.fillStyle='#02060e';evCtx.fillRect(0,0,W,H);
+  evCtx.fillStyle='#0a1525';evCtx.fillRect(0,H*.5,W,H*.5);
+  evCtx.fillStyle='rgba(255,255,255,.06)';evCtx.fillRect(W*.42,H*.54,W*.12,3);
+  evCtx.fillStyle='#1a2840';evCtx.beginPath();evCtx.ellipse(W*.38,H*.56,22,9,0,0,Math.PI*2);evCtx.fill();
+  evCtx.fillRect(W*.32,H*.45,24,14);
+  for(let i=0;i<3;i++){evCtx.beginPath();evCtx.arc(W*.34+i*10,H*.43,6,0,Math.PI*2);evCtx.fillStyle='#253450';evCtx.fill()}
+  evCtx.strokeStyle='#ff3366';evCtx.lineWidth=2;evCtx.strokeRect(W*.2,H*.33,W*.32,H*.37);
+  evCtx.fillStyle='rgba(255,51,102,.9)';evCtx.font='bold 9px monospace';evCtx.fillText('NO HELMET',W*.21,H*.32);
+  evCtx.strokeStyle='#00d4ff';evCtx.lineWidth=1.5;evCtx.strokeRect(W*.26,H*.64,W*.22,H*.1);
+  evCtx.fillStyle='#ffaa00';evCtx.font='bold 8px monospace';evCtx.fillText('KA 03 MX 1234',W*.27,H*.71);
+  evCtx.fillStyle='rgba(0,212,255,.12)';evCtx.font='bold 13px sans-serif';evCtx.fillText('EVIDENCE',W*.18,H*.96);
+}
+new ResizeObserver(drawEvidence).observe(evc);
+drawEvidence();
+
+// ═══════════════════════════════════════════════
+//  INTERSECTION OBSERVER (scroll reveals)
+// ═══════════════════════════════════════════════
+const io=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')})
+},{threshold:.1});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+// FPS live update
+setInterval(()=>{
+  const el=document.getElementById('fps-disp');
+  if(el)el.textContent=`⚡ ${(32+Math.random()*4).toFixed(1)} FPS`;
+},2200);
+</script>
+</body>
+</html>

@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrafficVerse AI — Violation Replay</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#03080f;--bg2:#060e1a;--bg3:#0a1628;
+  --c0:#00d4ff;--c1:#7c3aed;--c2:#00ff88;--c3:#ff3366;--c4:#ffaa00;
+  --t0:#f0f6ff;--t1:#94afc8;--t2:#3d5878;
+  --border:rgba(0,180,255,0.08);--border2:rgba(0,180,255,0.18);
+  --glass:rgba(6,14,26,0.82);
+  --font-d:'Space Grotesk',sans-serif;--font-b:'Inter',sans-serif;--font-m:'JetBrains Mono',monospace;
+}
+html{scroll-behavior:smooth;cursor:none}
+body{background:var(--bg);color:var(--t0);font-family:var(--font-b);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+#cursor{position:fixed;width:8px;height:8px;background:var(--c0);border-radius:50%;pointer-events:none;z-index:99999;transform:translate(-50%,-50%);mix-blend-mode:screen;transition:width .15s,height .15s}
+#cursor-ring{position:fixed;width:32px;height:32px;border:1px solid rgba(0,212,255,.35);border-radius:50%;pointer-events:none;z-index:99998;transform:translate(-50%,-50%);transition:width .2s,height .2s,border-color .2s}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:1000;padding:0 3rem;height:60px;display:flex;align-items:center;justify-content:space-between;background:rgba(3,8,15,.88);backdrop-filter:blur(20px);border-bottom:.5px solid var(--border)}
+.nav-logo{font-family:var(--font-d);font-size:1.05rem;font-weight:600;letter-spacing:-.02em;display:flex;align-items:center;gap:8px}
+.nav-logo-dot{width:5px;height:5px;background:var(--c0);border-radius:50%}
+.nav-back{display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--t1);text-decoration:none;transition:color .2s}
+.nav-back:hover{color:var(--c0)}
+.nav-badge{font-family:var(--font-m);font-size:.65rem;color:var(--c3);background:rgba(255,51,102,.08);border:.5px solid rgba(255,51,102,.2);padding:4px 12px;border-radius:100px;letter-spacing:.06em}
+
+/* HERO */
+#replay-hero{min-height:100vh;padding:7rem 3rem 4rem;display:flex;flex-direction:column;align-items:center;position:relative;overflow:hidden}
+#bg-canvas{position:absolute;inset:0;z-index:0}
+.hero-content{position:relative;z-index:2;max-width:900px;width:100%}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-m);font-size:.65rem;letter-spacing:.14em;text-transform:uppercase;color:var(--c3);background:rgba(255,51,102,.06);border:.5px solid rgba(255,51,102,.2);padding:5px 14px;border-radius:100px;margin-bottom:1.5rem;opacity:0;animation:fadeUp .7s .2s forwards}
+.hero-title{font-family:var(--font-d);font-size:clamp(2.8rem,6vw,5.5rem);font-weight:300;letter-spacing:-.05em;line-height:.96;margin-bottom:1.5rem;opacity:0;animation:fadeUp .7s .4s forwards}
+.hero-title strong{font-weight:700;background:linear-gradient(135deg,#ff3366,#ffaa00,#ff3366);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;background-size:200%;animation:gradientShift 4s ease infinite}
+@keyframes gradientShift{0%,100%{background-position:0%}50%{background-position:100%}}
+.hero-sub{font-size:.95rem;color:var(--t1);line-height:1.7;font-weight:300;max-width:520px;margin-bottom:3rem;opacity:0;animation:fadeUp .7s .6s forwards}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* VIOLATION PICKER */
+.v-picker{opacity:0;animation:fadeUp .7s .7s forwards}
+.vp-label{font-family:var(--font-m);font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--t2);margin-bottom:1rem;display:flex;align-items:center;gap:10px}
+.vp-label::before{content:'';width:20px;height:.5px;background:var(--t2)}
+.vp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:2.5rem}
+.vp-card{background:var(--bg2);border:.5px solid var(--border);border-radius:14px;padding:1.1rem 1.25rem;cursor:pointer;transition:all .3s;position:relative;overflow:hidden}
+.vp-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,51,102,.06),transparent);opacity:0;transition:opacity .3s}
+.vp-card:hover::before,.vp-card.selected::before{opacity:1}
+.vp-card:hover,.vp-card.selected{border-color:rgba(255,51,102,.3);transform:translateY(-2px)}
+.vp-card.selected{border-color:var(--c3);box-shadow:0 0 24px rgba(255,51,102,.12)}
+.vp-icon{font-size:1.4rem;margin-bottom:.5rem;opacity:.7}
+.vp-type{font-size:.82rem;font-weight:500;margin-bottom:2px}
+.vp-loc{font-size:.68rem;color:var(--t2)}
+.vp-conf{font-family:var(--font-m);font-size:.65rem;color:var(--c3);margin-top:6px}
+.vp-selected-badge{display:none;position:absolute;top:10px;right:10px;width:18px;height:18px;background:var(--c3);border-radius:50%;font-size:.6rem;align-items:center;justify-content:center;color:var(--bg)}
+.vp-card.selected .vp-selected-badge{display:flex}
+
+/* MAIN REPLAY PANEL */
+#replay-panel{position:relative;z-index:2;max-width:900px;width:100%;background:var(--bg2);border:.5px solid var(--border2);border-radius:22px;overflow:hidden;box-shadow:0 40px 120px rgba(0,0,0,.6)}
+.rp-header{padding:1.25rem 1.5rem;border-bottom:.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg3)}
+.rp-title{font-size:.85rem;font-weight:500;display:flex;align-items:center;gap:8px}
+.rp-badge{font-family:var(--font-m);font-size:.62rem;padding:3px 10px;border-radius:100px}
+.badge-live{background:rgba(255,51,102,.1);border:.5px solid rgba(255,51,102,.3);color:var(--c3)}
+.badge-info{background:rgba(0,212,255,.08);border:.5px solid rgba(0,212,255,.2);color:var(--c0)}
+.rp-controls{display:flex;align-items:center;gap:.75rem}
+.rp-btn{background:var(--bg);border:.5px solid var(--border);color:var(--t1);padding:7px 16px;border-radius:100px;font-size:.72rem;cursor:pointer;transition:all .2s;font-family:var(--font-b)}
+.rp-btn:hover{border-color:var(--border2);color:var(--t0)}
+.rp-btn.primary{background:var(--c3);color:#fff;border-color:transparent;font-weight:600}
+.rp-btn.primary:hover{background:#ff5580}
+
+.rp-body{display:grid;grid-template-columns:1.3fr 1fr}
+
+/* REPLAY CANVAS AREA */
+.rp-canvas-wrap{position:relative;background:var(--bg);border-right:.5px solid var(--border)}
+canvas#rp-canvas{width:100%;display:block}
+.rp-overlay{position:absolute;inset:0;pointer-events:none}
+.rp-overlay-top{position:absolute;top:1rem;left:1rem;right:1rem;display:flex;justify-content:space-between;align-items:flex-start}
+.rp-cam-id{font-family:var(--font-m);font-size:.62rem;color:rgba(0,212,255,.7);background:rgba(0,10,24,.7);padding:4px 10px;border-radius:6px;backdrop-filter:blur(8px);border:.5px solid rgba(0,212,255,.15)}
+.rp-timestamp{font-family:var(--font-m);font-size:.62rem;color:rgba(255,255,255,.6);background:rgba(0,10,24,.7);padding:4px 10px;border-radius:6px;backdrop-filter:blur(8px);border:.5px solid var(--border)}
+.rp-rec-badge{display:flex;align-items:center;gap:5px;font-family:var(--font-m);font-size:.58rem;color:var(--c3);background:rgba(0,10,24,.8);padding:4px 10px;border-radius:6px;border:.5px solid rgba(255,51,102,.25)}
+.rp-rec-dot{width:5px;height:5px;background:var(--c3);border-radius:50%;animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.rp-overlay-bottom{position:absolute;bottom:0;left:0;right:0;padding:.75rem 1rem;background:linear-gradient(transparent,rgba(0,5,15,.9))}
+.rp-progress{display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem}
+.rp-prog-bar{flex:1;height:2px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;cursor:pointer}
+.rp-prog-fill{height:100%;background:var(--c3);border-radius:2px;transition:width .1s linear}
+.rp-prog-time{font-family:var(--font-m);font-size:.62rem;color:var(--t2)}
+.rp-mini-controls{display:flex;gap:.5rem;align-items:center}
+.mc-btn{background:rgba(255,255,255,.06);border:.5px solid rgba(255,255,255,.08);color:var(--t1);width:28px;height:28px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.75rem;transition:all .2s}
+.mc-btn:hover{background:rgba(255,255,255,.12);color:var(--t0)}
+.mc-btn.play{background:var(--c3);border-color:transparent;color:#fff}
+.speed-chip{font-family:var(--font-m);font-size:.62rem;color:var(--c4);background:rgba(255,170,0,.1);border:.5px solid rgba(255,170,0,.2);padding:4px 10px;border-radius:100px;cursor:pointer;transition:all .2s}
+
+/* AI ANALYSIS PANEL */
+.rp-ai-panel{padding:1.5rem;display:flex;flex-direction:column;gap:1.25rem;overflow-y:auto;max-height:480px;scrollbar-width:none}
+.rp-ai-panel::-webkit-scrollbar{display:none}
+.ai-section-label{font-family:var(--font-m);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--t2);margin-bottom:.6rem;display:flex;align-items:center;gap:8px}
+.ai-section-label::after{content:'';flex:1;height:.5px;background:rgba(255,255,255,.05)}
+
+/* Violation summary */
+.viol-summary{background:rgba(255,51,102,.04);border:.5px solid rgba(255,51,102,.15);border-radius:12px;padding:1rem}
+.vs-type{font-size:.95rem;font-weight:600;color:var(--c3);margin-bottom:.25rem}
+.vs-plate{font-family:var(--font-m);font-size:.78rem;color:var(--c0);margin-bottom:.75rem}
+.vs-conf{display:flex;align-items:center;gap:.75rem;font-size:.72rem;color:var(--t2)}
+.conf-track{flex:1;height:2px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+.conf-fill-bar{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--c3),var(--c4))}
+
+/* Impact metrics */
+.impact-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.impact-card{background:var(--bg3);border:.5px solid var(--border);border-radius:10px;padding:.85rem}
+.ic-label{font-size:.62rem;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;font-family:var(--font-m);margin-bottom:4px}
+.ic-val{font-family:var(--font-d);font-size:1.3rem;font-weight:700;line-height:1}
+.ic-sub{font-size:.65rem;color:var(--t2);margin-top:3px}
+
+/* AI explanation typewriter */
+.ai-explain{background:var(--bg3);border:.5px solid var(--border);border-radius:12px;padding:1rem}
+.ai-explain-header{display:flex;align-items:center;gap:8px;margin-bottom:.75rem}
+.ai-orb-sm{width:22px;height:22px;border-radius:50%;background:conic-gradient(from 0deg,var(--c1),var(--c0),var(--c1));flex-shrink:0}
+.ai-orb-label{font-size:.72rem;font-weight:500}
+.ai-text{font-size:.78rem;color:var(--t1);line-height:1.7}
+.ai-cursor{display:inline-block;width:2px;height:12px;background:var(--c0);margin-left:2px;animation:blink .8s infinite;vertical-align:middle}
+
+/* Mini risk chart */
+.mini-chart-wrap{background:var(--bg3);border:.5px solid var(--border);border-radius:12px;padding:1rem}
+canvas.mini-c{width:100%!important}
+
+/* Recommendations */
+.rec-list{display:flex;flex-direction:column;gap:.5rem}
+.rec-row{display:flex;align-items:flex-start;gap:10px;padding:.75rem;background:var(--bg3);border:.5px solid var(--border);border-radius:10px;font-size:.78rem;transition:border-color .2s}
+.rec-row:hover{border-color:var(--border2)}
+.rec-icon-s{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0}
+.rec-body strong{display:block;font-size:.8rem;font-weight:500;margin-bottom:1px}
+.rec-body span{font-size:.7rem;color:var(--t2);line-height:1.5}
+
+/* STATS BAR */
+.rp-stats-bar{padding:1rem 1.5rem;border-top:.5px solid var(--border);display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;background:var(--bg3)}
+.rsb-item{text-align:center}
+.rsb-val{font-family:var(--font-m);font-size:.88rem;font-weight:500;color:var(--c0);display:block;line-height:1}
+.rsb-label{font-size:.6rem;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-top:4px}
+
+/* VIOLATION LIST */
+.viol-history{position:relative;z-index:2;max-width:900px;width:100%;margin-top:2.5rem}
+.vh-title{font-family:var(--font-d);font-size:1.3rem;font-weight:500;letter-spacing:-.02em;margin-bottom:1.25rem;display:flex;align-items:center;justify-content:space-between}
+.vh-count{font-size:.78rem;color:var(--t2);font-family:var(--font-m);font-weight:400}
+.vh-list{display:flex;flex-direction:column;gap:.6rem}
+.vh-item{background:var(--bg2);border:.5px solid var(--border);border-radius:14px;padding:1rem 1.25rem;display:flex;align-items:center;gap:1rem;cursor:pointer;transition:all .3s}
+.vh-item:hover{border-color:rgba(255,51,102,.25);background:rgba(255,51,102,.02);transform:translateX(4px)}
+.vh-item.active{border-color:var(--c3);background:rgba(255,51,102,.04)}
+.vh-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.vh-type{font-size:.82rem;font-weight:500;flex:1}
+.vh-loc{font-size:.7rem;color:var(--t2)}
+.vh-plate{font-family:var(--font-m);font-size:.7rem;color:var(--c0)}
+.vh-time{font-family:var(--font-m);font-size:.65rem;color:var(--t2)}
+.vh-conf{font-family:var(--font-m);font-size:.68rem;padding:2px 8px;border-radius:100px;background:rgba(255,51,102,.08);color:var(--c3);border:.5px solid rgba(255,51,102,.2)}
+.vh-play{width:28px;height:28px;border-radius:50%;background:rgba(255,51,102,.1);border:.5px solid rgba(255,51,102,.25);display:flex;align-items:center;justify-content:center;font-size:.7rem;color:var(--c3);transition:all .2s;flex-shrink:0}
+.vh-item:hover .vh-play{background:var(--c3);color:#fff}
+
+/* SCROLL TRANSITIONS */
+.fade-in{opacity:0;transform:translateY(24px);transition:opacity .7s,transform .7s}
+.fade-in.vis{opacity:1;transform:translateY(0)}
+
+@media(max-width:768px){
+  .vp-grid{grid-template-columns:1fr 1fr}
+  .rp-body{grid-template-columns:1fr}
+  .rp-stats-bar{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo"><div class="nav-logo-dot"></div>TrafficVerse AI</div>
+  <a href="trafficverse_v2.html" class="nav-back">← Back to Command Center</a>
+  <div class="nav-badge">● Violation Replay Engine</div>
+</nav>
+
+<!-- HERO -->
+<section id="replay-hero">
+  <canvas id="bg-canvas"></canvas>
+  <div class="hero-content">
+    <div class="hero-eyebrow">Signature Feature — AI Violation Replay</div>
+    <h1 class="hero-title">Every violation<br><strong>reconstructed.</strong></h1>
+    <p class="hero-sub">Click any violation to launch a 3D cinematic replay. Watch the vehicle path, understand the congestion cascade, and see what the AI saw — frame by frame.</p>
+
+    <!-- VIOLATION PICKER -->
+    <div class="v-picker">
+      <div class="vp-label">Select a violation to replay</div>
+      <div class="vp-grid" id="vp-grid"></div>
+    </div>
+  </div>
+
+  <!-- REPLAY PANEL -->
+  <div class="replay-wrap fade-in" id="replay-wrap" style="position:relative;z-index:2;max-width:900px;width:100%">
+    <div id="replay-panel">
+      <div class="rp-header">
+        <div class="rp-title">
+          <span id="rp-title-text">Helmet Violation + Triple Riding</span>
+          <span class="rp-badge badge-live" id="rp-badge">● Replaying</span>
+        </div>
+        <div class="rp-controls">
+          <button class="rp-btn" onclick="changeSpeed()">Speed: <span id="speed-label">1×</span></button>
+          <button class="rp-btn" onclick="downloadEvidence()">⬇ Evidence PDF</button>
+          <button class="rp-btn primary" onclick="startReplay()">▶ Replay</button>
+        </div>
+      </div>
+
+      <div class="rp-body">
+        <!-- CANVAS -->
+        <div class="rp-canvas-wrap">
+          <canvas id="rp-canvas" height="340"></canvas>
+          <div class="rp-overlay">
+            <div class="rp-overlay-top">
+              <div class="rp-cam-id">CAM-MG-047 · HD 1080p</div>
+              <div class="rp-rec-badge"><div class="rp-rec-dot"></div>REC</div>
+              <div class="rp-timestamp" id="rp-ts">08:47:23</div>
+            </div>
+            <div class="rp-overlay-bottom">
+              <div class="rp-progress">
+                <div class="rp-prog-bar" onclick="seekReplay(event)">
+                  <div class="rp-prog-fill" id="rp-prog" style="width:0%"></div>
+                </div>
+                <span class="rp-prog-time" id="rp-time">0:00 / 0:08</span>
+              </div>
+              <div class="rp-mini-controls">
+                <button class="mc-btn" onclick="skipBack()">⏮</button>
+                <button class="mc-btn play" id="play-btn" onclick="togglePlay()">▶</button>
+                <button class="mc-btn" onclick="skipForward()">⏭</button>
+                <span class="speed-chip" onclick="changeSpeed()">1×</span>
+                <div style="flex:1"></div>
+                <span style="font-family:var(--font-m);font-size:.62rem;color:var(--t2)">MG Road Junction, Bengaluru</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI PANEL -->
+        <div class="rp-ai-panel" id="rp-ai-panel">
+          <div>
+            <div class="ai-section-label">Violation detected</div>
+            <div class="viol-summary">
+              <div class="vs-type" id="ai-vtype">Helmet Violation + Triple Riding</div>
+              <div class="vs-plate" id="ai-plate">KA 03 MX 1234</div>
+              <div class="vs-conf">
+                <span>AI confidence</span>
+                <div class="conf-track"><div class="conf-fill-bar" id="ai-conf-bar" style="width:97%"></div></div>
+                <span style="color:var(--c3);font-family:var(--font-m);font-size:.7rem" id="ai-conf-val">97.3%</span>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="ai-section-label">Impact analysis</div>
+            <div class="impact-grid">
+              <div class="impact-card"><div class="ic-label">Delay caused</div><div class="ic-val" style="color:var(--c3)" id="ic-delay">+4.2 min</div><div class="ic-sub">MG Road J2–J4</div></div>
+              <div class="impact-card"><div class="ic-label">Congestion</div><div class="ic-val" style="color:var(--c4)" id="ic-cong">+18%</div><div class="ic-sub">Next 15 minutes</div></div>
+              <div class="impact-card"><div class="ic-label">Risk score</div><div class="ic-val" style="color:var(--c4)" id="ic-risk">92 → 94</div><div class="ic-sub">Zone risk delta</div></div>
+              <div class="impact-card"><div class="ic-label">Accident prob.</div><div class="ic-val" style="color:var(--c3)" id="ic-acc">34%</div><div class="ic-sub">Without intervention</div></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="ai-section-label">AI explanation</div>
+            <div class="ai-explain">
+              <div class="ai-explain-header">
+                <div class="ai-orb-sm"></div>
+                <span class="ai-orb-label">TrafficVerse Copilot</span>
+              </div>
+              <div class="ai-text" id="ai-text">
+                <span id="ai-typed"></span><span class="ai-cursor" id="ai-cursor"></span>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="ai-section-label">Congestion spread</div>
+            <div class="mini-chart-wrap">
+              <canvas id="mini-chart" class="mini-c" height="90"></canvas>
+            </div>
+          </div>
+
+          <div>
+            <div class="ai-section-label">Recommended actions</div>
+            <div class="rec-list">
+              <div class="rec-row"><div class="rec-icon-s" style="background:rgba(0,212,255,.1)">👮</div><div class="rec-body"><strong>Deploy officer immediately</strong><span>PSI Ravi Kumar is 0.2km away — estimated arrival 2 min</span></div></div>
+              <div class="rec-row"><div class="rec-icon-s" style="background:rgba(255,170,0,.1)">🚦</div><div class="rec-body"><strong>Extend green phase</strong><span>Add 15s to upstream signal to ease queue buildup</span></div></div>
+              <div class="rec-row"><div class="rec-icon-s" style="background:rgba(255,51,102,.1)">📱</div><div class="rec-body"><strong>Auto-challan generated</strong><span>Sent to KA 03 MX 1234 via DigiLocker — ₹1,000 fine</span></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STATS BAR -->
+      <div class="rp-stats-bar">
+        <div class="rsb-item"><span class="rsb-val">08:47:23</span><div class="rsb-label">Detected at</div></div>
+        <div class="rsb-item"><span class="rsb-val" id="rs-infer">2.1ms</span><div class="rsb-label">Inference time</div></div>
+        <div class="rsb-item"><span class="rsb-val">97.3%</span><div class="rsb-label">Confidence</div></div>
+        <div class="rsb-item"><span class="rsb-val">₹1,000</span><div class="rsb-label">Fine issued</div></div>
+        <div class="rsb-item"><span class="rsb-val" id="rs-evid">EVD-047821</span><div class="rsb-label">Evidence ID</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VIOLATION HISTORY -->
+<section style="padding:4rem 3rem;background:var(--bg2)">
+  <div style="max-width:900px;margin:0 auto">
+    <div class="fade-in">
+      <div class="vh-title">Recent violations<span class="vh-count" id="vh-count">Loading...</span></div>
+      <div class="vh-list" id="vh-list"></div>
+    </div>
+  </div>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+// CURSOR
+const cur=document.getElementById('cursor'),ring=document.getElementById('cursor-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px'});
+(function ac(){rx+=(mx-rx)*.14;ry+=(my-ry)*.14;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(ac)})();
+document.querySelectorAll('a,button,.vp-card,.vh-item,.mc-btn').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{cur.style.width='5px';cur.style.height='5px';ring.style.width='46px';ring.style.height='46px';ring.style.borderColor='rgba(255,51,102,.5)'});
+  el.addEventListener('mouseleave',()=>{cur.style.width='8px';cur.style.height='8px';ring.style.width='32px';ring.style.height='32px';ring.style.borderColor='rgba(0,212,255,.35)'});
+});
+
+// BG CANVAS
+const bgC=document.getElementById('bg-canvas');
+const bgCtx=bgC.getContext('2d');
+function resizeBG(){bgC.width=window.innerWidth;bgC.height=window.innerHeight}
+resizeBG();window.addEventListener('resize',resizeBG);
+
+const BG_STARS=Array.from({length:180},()=>({x:Math.random()*2000-1000,y:Math.random()*2000-1000,z:Math.random()*1000,speed:Math.random()*.4+.15}));
+const BG_PARTS=Array.from({length:60},()=>({x:Math.random()*bgC.width,y:Math.random()*bgC.height,vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,r:Math.random()*1.2+.4,a:Math.random()*.25+.05,col:Math.random()>.6?'255,51,102':'255,170,0'}));
+let bgF=0;
+
+(function animBG(){
+  bgCtx.clearRect(0,0,bgC.width,bgC.height);
+  // Danger aurora
+  const a1=bgCtx.createRadialGradient(bgC.width*.3,bgC.height*.5,0,bgC.width*.3,bgC.height*.5,bgC.width*.55);
+  a1.addColorStop(0,`rgba(180,30,0,${.09+Math.sin(bgF*.01)*.02})`);a1.addColorStop(1,'rgba(0,0,0,0)');
+  bgCtx.fillStyle=a1;bgCtx.fillRect(0,0,bgC.width,bgC.height);
+  const a2=bgCtx.createRadialGradient(bgC.width*.75,bgC.height*.4,0,bgC.width*.75,bgC.height*.4,bgC.width*.45);
+  a2.addColorStop(0,`rgba(60,0,140,${.07+Math.cos(bgF*.008)*.02})`);a2.addColorStop(1,'rgba(0,0,0,0)');
+  bgCtx.fillStyle=a2;bgCtx.fillRect(0,0,bgC.width,bgC.height);
+  // Stars
+  const cx=bgC.width/2,cy=bgC.height/2;
+  BG_STARS.forEach(s=>{s.z-=s.speed;if(s.z<=0)s.z=1000;const sx=cx+(s.x/s.z)*200,sy=cy+(s.y/s.z)*200;const r=Math.max(.2,(1-s.z/1000)*2);bgCtx.beginPath();bgCtx.arc(sx,sy,r,0,Math.PI*2);bgCtx.fillStyle=`rgba(200,210,255,${(1-s.z/1000)*.5})`;bgCtx.fill()});
+  // Particles
+  BG_PARTS.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>bgC.width)p.vx*=-1;if(p.y<0||p.y>bgC.height)p.vy*=-1;bgCtx.beginPath();bgCtx.arc(p.x,p.y,p.r,0,Math.PI*2);bgCtx.fillStyle=`rgba(${p.col},${p.a})`;bgCtx.fill()});
+  // Grid
+  bgCtx.strokeStyle='rgba(255,51,102,.025)';bgCtx.lineWidth=.5;
+  for(let i=-300;i<=300;i+=30){const a=proj2(i,0,-300),b=proj2(i,0,300);bgCtx.beginPath();bgCtx.moveTo(a.x,a.y);bgCtx.lineTo(b.x,b.y);bgCtx.stroke();const c=proj2(-300,0,i),d=proj2(300,0,i);bgCtx.beginPath();bgCtx.moveTo(c.x,c.y);bgCtx.lineTo(d.x,d.y);bgCtx.stroke()}
+  bgF++;requestAnimationFrame(animBG);
+})();
+
+function proj2(x,y,z){const W=bgC.width,H=bgC.height;const rx=x*Math.cos(.4)-z*Math.sin(.4),rz=x*Math.sin(.4)+z*Math.cos(.4);return{x:W/2+rx*.8,y:H*.55+(rz*Math.cos(.5)-y*.6)*.8}}
+
+// ═══════════════════ VIOLATION DATA ═══════════════════
+const VIOLATIONS_DATA=[
+  {icon:'⛑️',type:'Helmet Violation + Triple Riding',loc:'MG Road Junction',plate:'KA 03 MX 1234',conf:97.3,time:'08:47:23',color:'#ff3366',delay:4.2,cong:18,risk:'92→94',acc:34,
+   ai:"Vehicle KA 03 MX 1234, a black Honda Activa, was detected carrying 3 riders at 08:47:23. None of the riders wore helmets. The vehicle crossed junction MG-J2 at 38 km/h — 8 km/h above the limit for that zone.\n\nThis violation increases congestion by 18% as responding officers must temporarily redirect traffic. Accident probability without intervention: 34%. Fine of ₹1,000 auto-generated and dispatched via DigiLocker."},
+  {icon:'🚦',type:'Red Light Violation',loc:'Brigade Road Signal #3',plate:'KA 01 AB 5678',conf:93.7,time:'09:12:44',color:'#ff3366',delay:2.8,cong:12,risk:'78→81',acc:21,
+   ai:"Car KA 01 AB 5678, a white Maruti Swift, ran a red light at Brigade Road Signal #3 at 09:12:44, entering the intersection 1.4 seconds after the light turned red.\n\nCross-traffic had a 4-second green by then, creating a near-miss scenario with a two-wheeler. No collision occurred. Dashcam evidence confirmed the violation at 93.7% confidence. Challan of ₹1,000 issued automatically."},
+  {icon:'🅿️',type:'Illegal Parking',loc:'Brigade Road, Commercial',plate:'KA 05 MH 9012',conf:95.8,time:'09:34:11',color:'#ffaa00',delay:6.1,cong:23,risk:'78→83',acc:9,
+   ai:"Vehicle KA 05 MH 9012 was parked in a no-parking zone outside Brigade Road Commercial Block A for 47 minutes. The vehicle blocked 1.2 lanes of traffic, causing an estimated 6.1 min additional delay for downstream vehicles.\n\nLane blockage increased congestion by 23%. Tow truck dispatched at 09:31. Vehicle removed by 09:41. Fine of ₹500 issued. Owner notified via SMS and DigiLocker."},
+  {icon:'↩️',type:'Wrong-Side Driving',loc:'Outer Ring Road, Tech Corridor',plate:'MH 12 AB 3456',conf:91.2,time:'10:05:55',color:'#ff3366',delay:8.4,cong:31,risk:'61→68',acc:51,
+   ai:"Motorcycle MH 12 AB 3456 was detected travelling against traffic direction on Outer Ring Road for 340 metres at 10:05:55. The vehicle was moving at approximately 52 km/h on the wrong lane during peak traffic.\n\nThis is the highest-risk violation type detected today. Accident probability: 51% without immediate intervention. Emergency alert sent to PSI Kumar — response in under 90 seconds. Challan of ₹2,000 issued. Case flagged for court hearing."},
+  {icon:'⛔',type:'Stop Line Violation',loc:'Silk Board Junction, Signal 7',plate:'KA 09 JK 7890',conf:88.4,time:'10:28:32',color:'#ffaa00',delay:1.9,cong:8,risk:'85→86',acc:16,
+   ai:"Car KA 09 JK 7890 crossed the stop line at Silk Board Signal 7 by 2.3 metres while the light was red at 10:28:32. This created obstruction for the pedestrian crossing lane.\n\nThe violation was detected by overhead camera CAM-SB-007 using the calibrated stop-line boundary coordinates. Confidence 88.4%. Fine of ₹500 auto-generated. No pedestrian injury occurred."},
+  {icon:'🚗',type:'Seatbelt Violation',loc:'MG Road, Near Trinity Circle',plate:'KA 03 CD 2345',conf:94.1,time:'11:02:18',color:'#7c3aed',delay:0.4,cong:2,risk:'92→92',acc:12,
+   ai:"Front passenger in vehicle KA 03 CD 2345 was detected without a seatbelt at 11:02:18 near Trinity Circle on MG Road. The driver was compliant. Detection used the YOLOv11 seatbelt classifier with 94.1% confidence.\n\nThis violation carries lower traffic impact but significant safety risk at high speed. Fine of ₹1,000 issued under Section 194B of the Motor Vehicles Act. Evidence photo quality: 91.2% (clear daylight conditions)."},
+];
+
+let selectedViolation=0,isPlaying=false,playProgress=0,playSpeed=1,animFrame=null,typeTimeout=null;
+
+// VIOLATION PICKER
+function buildPicker(){
+  const grid=document.getElementById('vp-grid');
+  grid.innerHTML=VIOLATIONS_DATA.map((v,i)=>`
+    <div class="vp-card${i===0?' selected':''}" onclick="selectViolation(${i},this)">
+      <div class="vp-selected-badge">✓</div>
+      <div class="vp-icon">${v.icon}</div>
+      <div class="vp-type">${v.type}</div>
+      <div class="vp-loc">${v.loc}</div>
+      <div class="vp-conf">${v.conf}% confidence</div>
+    </div>`).join('');
+}
+buildPicker();
+
+function selectViolation(idx,btn){
+  selectedViolation=idx;
+  document.querySelectorAll('.vp-card').forEach(c=>c.classList.remove('selected'));
+  if(btn)btn.classList.add('selected');
+  updateAIPanel(idx);
+  resetReplay();
+  startReplay();
+}
+
+function updateAIPanel(idx){
+  const v=VIOLATIONS_DATA[idx];
+  document.getElementById('rp-title-text').textContent=v.type;
+  document.getElementById('ai-vtype').textContent=v.type;
+  document.getElementById('ai-plate').textContent=v.plate;
+  document.getElementById('ai-conf-bar').style.width=v.conf+'%';
+  document.getElementById('ai-conf-val').textContent=v.conf+'%';
+  document.getElementById('ic-delay').textContent='+'+v.delay+' min';
+  document.getElementById('ic-cong').textContent='+'+v.cong+'%';
+  document.getElementById('ic-risk').textContent=v.risk;
+  document.getElementById('ic-acc').textContent=v.acc+'%';
+  document.getElementById('rp-ts').textContent=v.time;
+  document.getElementById('rs-evid').textContent='EVD-'+Math.floor(Math.random()*999999);
+  typeAIText(v.ai);
+  buildVHList();
+}
+
+// Typewriter
+function typeAIText(text){
+  clearTimeout(typeTimeout);
+  const el=document.getElementById('ai-typed');
+  const cur=document.getElementById('ai-cursor');
+  el.textContent='';
+  let i=0;
+  cur.style.display='inline-block';
+  function type(){if(i<text.length){el.textContent+=text[i++];typeTimeout=setTimeout(type,14)}else cur.style.display='none'}
+  type();
+}
+
+// REPLAY CANVAS
+const rpC=document.getElementById('rp-canvas');
+const rpCtx=rpC.getContext('2d');
+
+function resizeRPC(){rpC.width=rpC.offsetWidth;rpC.height=340}
+resizeRPC();new ResizeObserver(resizeRPC).observe(rpC);
+
+// Road/scene positions
+const ROAD_PATH=[
+  {x:.08,y:.45},{x:.25,y:.42},{x:.5,y:.4},{x:.72,y:.38},{x:.92,y:.35}
+];
+
+let vehiclePos=0,violFrame=0,bboxAlpha=0,glowR=0,congSpread=0;
+
+function drawReplay(){
+  rpC.width=rpC.offsetWidth;rpC.height=340;
+  const W=rpC.width,H=rpC.height;
+  rpCtx.fillStyle='#02060e';rpCtx.fillRect(0,0,W,H);
+
+  // Road
+  rpCtx.fillStyle='#0a1525';rpCtx.fillRect(0,H*.35,W,H*.55);
+  // Lane lines
+  for(let i=0;i<7;i++){rpCtx.fillStyle=`rgba(40,70,110,${.3+Math.sin(violFrame*.05+i)*.08})`;rpCtx.fillRect(W*.08+i*W*.14,H*.43,W*.08,4)}
+  // Sidewalk
+  rpCtx.fillStyle='#070f1e';rpCtx.fillRect(0,0,W,H*.35);
+  rpCtx.fillStyle='#0d1a2e';rpCtx.fillRect(0,H*.88,W,H*.12);
+
+  // Buildings silhouette
+  [[.05,.2,.1,.35],[.2,.15,.08,.35],[.32,.25,.06,.35],[.8,.18,.09,.35],[.92,.12,.07,.35]].forEach(([x,h,w,y])=>{
+    rpCtx.fillStyle='#08111e';rpCtx.fillRect(x*W,H*y-H*h,w*W,H*h);
+    // Windows
+    for(let wy=H*y-H*h+8;wy<H*y-8;wy+=10)for(let wx=x*W+4;wx<(x+w)*W-4;wx+=8){if(Math.random()>.45){rpCtx.fillStyle=`rgba(150,180,255,${.3+Math.random()*.3})`;rpCtx.fillRect(wx,wy,4,3)}}
+  });
+
+  // Scan lines (CCTV feel)
+  for(let y=0;y<H;y+=2){rpCtx.fillStyle='rgba(0,0,0,.06)';rpCtx.fillRect(0,y,W,1)}
+
+  // Progress-based effects
+  const viol=VIOLATIONS_DATA[selectedViolation];
+  const prog=playProgress;
+
+  // Vehicle path (interpolate through road points)
+  const pathLen=ROAD_PATH.length-1;
+  const pathPos=Math.min(prog*pathLen*1.2,pathLen);
+  const pi=Math.min(Math.floor(pathPos),pathLen-1);
+  const pt=pathPos-pi;
+  const p1=ROAD_PATH[pi],p2=ROAD_PATH[Math.min(pi+1,pathLen)];
+  const vx=(p1.x+(p2.x-p1.x)*pt)*W;
+  const vy=(p1.y+(p2.y-p1.y)*pt)*H;
+
+  // Vehicle glow trail
+  if(prog>.1){
+    for(let t=0;t<8;t++){
+      const tp=Math.max(0,prog-.05*t);
+      const tpi=Math.min(Math.floor(tp*pathLen*1.2),pathLen-1);
+      const tpt=tp*pathLen*1.2-tpi;
+      const tp1=ROAD_PATH[tpi],tp2=ROAD_PATH[Math.min(tpi+1,pathLen)];
+      const tx=(tp1.x+(tp2.x-tp1.x)*tpt)*W,ty=(tp1.y+(tp2.y-tp1.y)*tpt)*H;
+      rpCtx.beginPath();rpCtx.arc(tx,ty,3-t*.3,0,Math.PI*2);
+      rpCtx.fillStyle=`rgba(255,51,102,${(.6-t*.07)*(1-t/10)})`;rpCtx.fill();
+    }
+  }
+
+  // Vehicle
+  rpCtx.fillStyle='#1a2840';rpCtx.beginPath();rpCtx.ellipse(vx,vy,22,10,0,0,Math.PI*2);rpCtx.fill();
+  rpCtx.fillRect(vx-14,vy-15,28,16);
+  // Riders (if triple riding)
+  if(viol.type.includes('Triple')){for(let i=0;i<3;i++){rpCtx.beginPath();rpCtx.arc(vx-8+i*9,vy-20,5,0,Math.PI*2);rpCtx.fillStyle='#253450';rpCtx.fill()}}
+  else{rpCtx.beginPath();rpCtx.arc(vx,vy-18,6,0,Math.PI*2);rpCtx.fillStyle='#253450';rpCtx.fill()}
+
+  // Detection bbox (appears after frame 0.25)
+  if(prog>.25){
+    bboxAlpha=Math.min(1,bboxAlpha+.04);
+    const bx=vx-28,by=vy-28,bw=56,bh=50;
+    rpCtx.strokeStyle=viol.color;rpCtx.lineWidth=2;rpCtx.globalAlpha=bboxAlpha;
+    const cs=12;
+    [[bx,by,1,0,0,1],[bx+bw,by,-1,0,0,1],[bx,by+bh,1,0,0,-1],[bx+bw,by+bh,-1,0,0,-1]].forEach(([ox,oy,dx2,dy2,dx3,dy3])=>{
+      rpCtx.beginPath();rpCtx.moveTo(ox+dx2*cs,oy);rpCtx.lineTo(ox,oy);rpCtx.lineTo(ox,oy+dy3*cs);rpCtx.stroke();
+    });
+    rpCtx.globalAlpha=1;
+    // Label
+    rpCtx.font='bold 10px monospace';rpCtx.fillStyle=viol.color;
+    rpCtx.fillText(viol.type.split(' ')[0]+' '+viol.conf+'%',bx,by-5);
+    // Plate
+    if(prog>.45){rpCtx.strokeStyle='#00d4ff';rpCtx.lineWidth=1.5;rpCtx.strokeRect(vx-18,vy+4,36,12);rpCtx.fillStyle='#ffaa00';rpCtx.font='8px monospace';rpCtx.fillText(viol.plate.slice(0,8),vx-16,vy+13)}
+  }
+
+  // Congestion spread (after violation detected)
+  if(prog>.5){
+    congSpread=Math.min(1,congSpread+.008);
+    const cg=rpCtx.createRadialGradient(vx,vy,0,vx,vy,150*congSpread);
+    cg.addColorStop(0,`rgba(255,100,0,${.15*congSpread})`);cg.addColorStop(.5,`rgba(255,50,0,${.07*congSpread})`);cg.addColorStop(1,'rgba(0,0,0,0)');
+    rpCtx.fillStyle=cg;rpCtx.fillRect(0,0,W,H);
+    // Alert text
+    if(prog>.65){
+      rpCtx.fillStyle=`rgba(255,51,102,${.8*Math.min(1,(prog-.65)/.2)})`;
+      rpCtx.font='bold 11px monospace';rpCtx.fillText('⚠ VIOLATION DETECTED',vx-60,vy-38);
+    }
+  }
+
+  // Road glow on violation path
+  if(prog>.6){
+    const rg=rpCtx.createLinearGradient(0,H*.4,W*.7,H*.4);
+    rg.addColorStop(0,`rgba(255,51,102,0)`);rg.addColorStop(.5,`rgba(255,51,102,${.12*congSpread})`);rg.addColorStop(1,'rgba(255,51,102,0)');
+    rpCtx.fillStyle=rg;rpCtx.fillRect(0,H*.36,W*.7,H*.12);
+  }
+
+  // Other vehicles
+  [[.3,H*.41],[.55,H*.44],[.7,H*.42],[.85,H*.4]].forEach(([x,y],i)=>{
+    if(x*W<vx-50)return;
+    // Stopped vehicles behind
+    const stopped=prog>.4&&x*W<vx+40;
+    const vx2=stopped?x*W:x*W+Math.sin(violFrame*.04+i)*2;
+    rpCtx.fillStyle=`rgba(20,40,80,${.8+Math.sin(i*.9)*.1})`;rpCtx.fillRect(vx2-16,y-8,32,14);
+    rpCtx.beginPath();rpCtx.arc(vx2,y-11,5,0,Math.PI*2);rpCtx.fillStyle='#1e3558';rpCtx.fill();
+    if(stopped){rpCtx.fillStyle='rgba(255,100,0,.6)';rpCtx.fillRect(vx2-16,y+4,32,3)} // brake lights
+  });
+
+  // Timestamp overlay
+  const sec=Math.floor(prog*8);
+  rpCtx.fillStyle='rgba(0,212,255,.8)';rpCtx.font='10px monospace';
+  rpCtx.fillText(`08:47:${(23+sec).toString().padStart(2,'0')}`,8,H-10);
+
+  // Progress label
+  document.getElementById('rp-time').textContent=`0:0${sec} / 0:08`;
+  document.getElementById('rp-prog').style.width=(prog*100)+'%';
+  document.getElementById('rp-ts').textContent=`08:47:${(23+sec).toString().padStart(2,'0')}`;
+
+  violFrame++;
+}
+
+// PLAYBACK
+function startReplay(){
+  resetReplay();
+  isPlaying=true;
+  document.getElementById('play-btn').textContent='⏸';
+  document.getElementById('rp-badge').className='rp-badge badge-live';
+  document.getElementById('rp-badge').textContent='● Replaying';
+  animReplay();
+}
+
+function resetReplay(){
+  isPlaying=false;cancelAnimationFrame(animFrame);
+  playProgress=0;bboxAlpha=0;congSpread=0;violFrame=0;
+  document.getElementById('rp-prog').style.width='0%';
+  document.getElementById('play-btn').textContent='▶';
+}
+
+function animReplay(){
+  drawReplay();
+  if(isPlaying){
+    playProgress+=.003*playSpeed;
+    if(playProgress>=1){playProgress=1;isPlaying=false;document.getElementById('play-btn').textContent='▶';document.getElementById('rp-badge').className='rp-badge badge-info';document.getElementById('rp-badge').textContent='✓ Complete'}
+    else animFrame=requestAnimationFrame(animReplay);
+  }
+}
+
+function togglePlay(){
+  if(isPlaying){isPlaying=false;document.getElementById('play-btn').textContent='▶'}
+  else{
+    if(playProgress>=1)resetReplay();
+    isPlaying=true;document.getElementById('play-btn').textContent='⏸';
+    document.getElementById('rp-badge').className='rp-badge badge-live';
+    document.getElementById('rp-badge').textContent='● Replaying';
+    animReplay();
+  }
+}
+
+const SPEEDS=[1,2,4,.5];let speedIdx=0;
+function changeSpeed(){
+  speedIdx=(speedIdx+1)%SPEEDS.length;playSpeed=SPEEDS[speedIdx];
+  document.getElementById('speed-label').textContent=SPEEDS[speedIdx]+'×';
+  document.querySelectorAll('.speed-chip').forEach(s=>s.textContent=SPEEDS[speedIdx]+'×');
+}
+
+function skipBack(){playProgress=Math.max(0,playProgress-.15);bboxAlpha=0;congSpread=0;if(!isPlaying)drawReplay()}
+function skipForward(){playProgress=Math.min(1,playProgress+.15);if(!isPlaying)drawReplay()}
+
+function seekReplay(e){
+  const bar=e.currentTarget;const rect=bar.getBoundingClientRect();
+  playProgress=(e.clientX-rect.left)/rect.width;
+  bboxAlpha=playProgress>.25?1:0;congSpread=playProgress>.5?(playProgress-.5)*2:0;
+  if(!isPlaying)drawReplay();
+}
+
+function downloadEvidence(){alert('Evidence PDF generated and downloaded!\n\nFile: evidence_'+VIOLATIONS_DATA[selectedViolation].plate.replace(/ /g,'_')+'_'+VIOLATIONS_DATA[selectedViolation].time.replace(/:/g,'')+'.pdf')}
+
+// MINI CHART
+Chart.defaults.color='#3d5878';Chart.defaults.borderColor='rgba(0,180,255,0.06)';
+Chart.defaults.font={family:"'Inter',sans-serif",size:10};
+new Chart(document.getElementById('mini-chart'),{type:'line',data:{labels:['−15m','Now','5m','10m','15m','20m','25m'],datasets:[{label:'Risk score',data:[72,92,94,91,88,82,78],borderColor:'#ff3366',backgroundColor:'rgba(255,51,102,.06)',borderWidth:1.5,fill:true,tension:.4,pointRadius:2,pointBackgroundColor:'#ff3366'},{label:'Congestion',data:[60,78,83,87,84,79,74],borderColor:'#ffaa00',borderWidth:1,fill:false,tension:.4,pointRadius:1,borderDash:[3,2]}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{labels:{color:'#3d5878',boxWidth:8,font:{size:9}}}},scales:{x:{grid:{color:'rgba(0,180,255,.04)'},ticks:{color:'#3d5878',font:{size:9}}},y:{grid:{color:'rgba(0,180,255,.04)'},ticks:{color:'#3d5878'},min:55,max:100}}}});
+
+// VIOLATION HISTORY
+function buildVHList(){
+  const list=document.getElementById('vh-list');
+  const count=document.getElementById('vh-count');
+  count.textContent=`${VIOLATIONS_DATA.length} violations today`;
+  list.innerHTML=VIOLATIONS_DATA.map((v,i)=>`
+    <div class="vh-item${i===0?' active':''}" onclick="selectViolation(${i},null);document.querySelectorAll('.vh-item').forEach(x=>x.classList.remove('active'));this.classList.add('active')">
+      <div class="vh-dot" style="background:${v.color}"></div>
+      <div style="flex:1">
+        <div class="vh-type">${v.type}</div>
+        <div class="vh-loc">${v.loc}</div>
+      </div>
+      <div class="vh-plate">${v.plate}</div>
+      <div class="vh-time">${v.time}</div>
+      <div class="vh-conf">${v.conf}%</div>
+      <div class="vh-play">▶</div>
+    </div>`).join('');
+}
+buildVHList();
+
+// Init
+updateAIPanel(0);
+drawReplay();
+setTimeout(startReplay,800);
+
+// Scroll reveals
+const sio=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('vis')}),{threshold:.1});
+document.querySelectorAll('.fade-in').forEach(el=>sio.observe(el));
+</script>
+</body>
+</html>

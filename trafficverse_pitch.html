@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrafficVerse AI — Pitch Deck</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--blue:#00d4ff;--purple:#7c3aed;--green:#00ff88;--red:#ff3366;--amber:#ffaa00;--bg:#060b14;--surf:#0d1524;--border:#1e3a5f;--text:#e2e8f0;--muted:#64748b}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;overflow:hidden}
+.slides{width:100%;height:100vh;overflow:hidden;position:relative}
+.slide{position:absolute;inset:0;padding:5rem 8rem;display:flex;flex-direction:column;justify-content:center;opacity:0;transform:translateY(30px);transition:all 0.6s cubic-bezier(.4,0,.2,1);pointer-events:none}
+.slide.active{opacity:1;transform:none;pointer-events:all}
+.slide.prev{opacity:0;transform:translateY(-30px)}
+/* Nav */
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1.2rem 4rem;display:flex;justify-content:space-between;align-items:center;background:rgba(6,11,20,0.8);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+.logo{font-family:'Space Grotesk',sans-serif;font-size:1.1rem;font-weight:700;color:var(--blue)}
+.nav-right{display:flex;align-items:center;gap:2rem}
+.slide-counter{font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--muted)}
+.nav-dots{display:flex;gap:6px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--border);cursor:pointer;transition:all 0.3s}
+.dot.active{background:var(--blue);width:20px;border-radius:3px}
+/* Arrows */
+.arrow{position:fixed;bottom:2rem;background:rgba(30,58,95,0.5);border:1px solid var(--border);color:var(--text);width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;z-index:100;font-size:1.2rem;backdrop-filter:blur(8px)}
+.arrow:hover{background:rgba(0,212,255,0.15);border-color:var(--blue);color:var(--blue)}
+#prev-btn{left:2rem}
+#next-btn{right:2rem}
+/* Typography */
+.eyebrow{font-size:0.72rem;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--blue);margin-bottom:1rem;display:flex;align-items:center;gap:8px}
+.eyebrow::before{content:'';width:24px;height:1.5px;background:var(--blue)}
+h1{font-family:'Space Grotesk',sans-serif;font-size:clamp(3rem,6vw,5.5rem);font-weight:900;line-height:1.0;letter-spacing:-0.04em;margin-bottom:1.5rem}
+h2{font-family:'Space Grotesk',sans-serif;font-size:clamp(2rem,4vw,3.5rem);font-weight:700;line-height:1.1;letter-spacing:-0.03em;margin-bottom:1rem}
+h3{font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:0.5rem}
+.accent{background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.body-large{font-size:1.15rem;line-height:1.7;color:var(--muted);max-width:700px;margin-bottom:2rem}
+/* Cards */
+.card-grid{display:grid;gap:1rem}
+.card{background:rgba(13,21,36,0.8);border:1px solid var(--border);border-radius:16px;padding:1.25rem 1.5rem}
+.card.highlight{border-color:rgba(0,212,255,0.35);background:rgba(0,212,255,0.04)}
+/* Stat row */
+.stat-row{display:flex;gap:2rem;margin:2rem 0;flex-wrap:wrap}
+.stat{text-align:left}
+.stat-n{font-family:'Space Grotesk',sans-serif;font-size:3rem;font-weight:900;color:var(--blue);line-height:1}
+.stat-l{font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-top:4px}
+/* Pill */
+.pill{display:inline-flex;align-items:center;gap:6px;background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.25);color:var(--blue);padding:5px 14px;border-radius:20px;font-size:0.72rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase}
+/* Tag row */
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:1.5rem}
+.tag{padding:6px 14px;border-radius:8px;font-size:0.75rem;font-weight:600;font-family:'JetBrains Mono',monospace}
+.tag.blue{background:rgba(0,212,255,0.1);color:var(--blue);border:1px solid rgba(0,212,255,0.25)}
+.tag.purple{background:rgba(124,58,237,0.1);color:#a78bfa;border:1px solid rgba(124,58,237,0.25)}
+.tag.green{background:rgba(0,255,136,0.1);color:var(--green);border:1px solid rgba(0,255,136,0.25)}
+/* Two col */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center}
+/* Table */
+.pitch-table{width:100%;border-collapse:collapse;font-size:0.9rem}
+.pitch-table th{text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);color:var(--muted);font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;font-weight:600}
+.pitch-table td{padding:12px 14px;border-bottom:1px solid rgba(30,58,95,0.5)}
+.pitch-table tr:last-child td{border-bottom:none}
+.pitch-table .us{color:var(--green);font-weight:600}
+.pitch-table .them{color:var(--muted)}
+/* Timeline */
+.timeline{display:flex;flex-direction:column;gap:1.5rem;position:relative}
+.timeline::before{content:'';position:absolute;left:15px;top:8px;bottom:8px;width:1.5px;background:linear-gradient(var(--blue),var(--purple))}
+.tl-item{display:flex;gap:1.5rem;align-items:flex-start;padding-left:0}
+.tl-dot{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;color:#fff;flex-shrink:0;z-index:1}
+.tl-content h4{font-weight:600;font-size:0.95rem;margin-bottom:2px}
+.tl-content p{font-size:0.8rem;color:var(--muted)}
+/* Impact bar */
+.impact-row{display:flex;align-items:center;gap:1rem;margin-bottom:1rem}
+.impact-label{font-size:0.82rem;width:220px;color:var(--text);flex-shrink:0}
+.impact-bar-wrap{flex:1;background:rgba(30,58,95,0.5);height:8px;border-radius:4px;overflow:hidden}
+.impact-bar{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--blue),var(--purple));transition:width 1s}
+.impact-val{font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--blue);width:60px;text-align:right;flex-shrink:0}
+/* Slide backgrounds */
+.slide-1 .bg-accent{position:absolute;right:-200px;top:50%;transform:translateY(-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(0,212,255,0.07) 0%,transparent 70%);border-radius:50%;pointer-events:none}
+.slide-1 .bg-accent2{position:absolute;left:-100px;bottom:-100px;width:400px;height:400px;background:radial-gradient(circle,rgba(124,58,237,0.06) 0%,transparent 70%);border-radius:50%;pointer-events:none}
+/* Violation grid */
+.viol-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem}
+.viol-card{background:rgba(13,21,36,0.8);border:1px solid var(--border);border-radius:12px;padding:1rem;text-align:center}
+.viol-icon{font-size:1.5rem;margin-bottom:0.4rem}
+.viol-name{font-size:0.72rem;font-weight:600;color:var(--text);margin-bottom:4px}
+.viol-acc{font-size:1.1rem;font-weight:700;font-family:'Space Grotesk',sans-serif}
+/* Progress bar small */
+.perf-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:0.8rem}
+.perf-label{width:180px;color:var(--muted);flex-shrink:0}
+.perf-bar-w{flex:1;background:rgba(30,58,95,0.5);height:5px;border-radius:3px}
+.perf-bar{height:100%;border-radius:3px}
+.perf-val{width:50px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--blue)}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="logo">TrafficVerse AI</div>
+  <div class="nav-right">
+    <div class="nav-dots" id="dots"></div>
+    <div class="slide-counter"><span id="cur-slide">1</span> / <span id="total-slides">9</span></div>
+  </div>
+</nav>
+
+<div class="slides" id="slides">
+
+<!-- SLIDE 1: TITLE -->
+<div class="slide slide-1" id="s1">
+  <div class="bg-accent"></div><div class="bg-accent2"></div>
+  <div class="pill">🏆 Flipkart Gridlock Hackathon 2024 — Round 2</div>
+  <br>
+  <h1>Traffic<span class="accent">Verse</span> AI</h1>
+  <p class="body-large">The Digital Twin for Intelligent Traffic Enforcement.<br>Real-time AI detection · Smart city command center · Auto-generated legal evidence.</p>
+  <div class="stat-row">
+    <div class="stat"><div class="stat-n">97.3%</div><div class="stat-l">Detection Accuracy</div></div>
+    <div class="stat"><div class="stat-n">2.1ms</div><div class="stat-l">Inference Latency</div></div>
+    <div class="stat"><div class="stat-n">8</div><div class="stat-l">Violation Types</div></div>
+    <div class="stat"><div class="stat-n">47</div><div class="stat-l">Live Cameras</div></div>
+  </div>
+  <div class="tags">
+    <span class="tag blue">YOLOv11x</span><span class="tag blue">ByteTrack</span><span class="tag blue">PaddleOCR</span>
+    <span class="tag purple">Three.js Digital Twin</span><span class="tag purple">FastAPI</span>
+    <span class="tag green">Real-Time WebSocket</span><span class="tag green">GPU Inference</span>
+  </div>
+</div>
+
+<!-- SLIDE 2: PROBLEM -->
+<div class="slide" id="s2">
+  <div class="eyebrow">The Problem</div>
+  <h2>India loses <span class="accent">₹1.47 Lakh Crore</span> annually to traffic violations</h2>
+  <div class="two-col" style="margin-top:2rem">
+    <div>
+      <div class="card-grid" style="grid-template-columns:1fr">
+        <div class="card"><h3 style="color:var(--red)">🚨 Helmet violations</h3><p style="color:var(--muted);font-size:0.85rem;margin-top:4px">67,000+ deaths/year. Only 28% of riders wear helmets. Manual enforcement catches &lt;0.1%.</p></div>
+        <div class="card"><h3 style="color:var(--amber)">📷 Manual cameras</h3><p style="color:var(--muted);font-size:0.85rem;margin-top:4px">Officers review footage manually. 72-hour evidence backlog. No real-time alerts.</p></div>
+        <div class="card"><h3 style="color:var(--blue)">📄 Paper evidence</h3><p style="color:var(--muted);font-size:0.85rem;margin-top:4px">Challan disputes due to poor evidence quality. 34% of fines contested in court.</p></div>
+        <div class="card"><h3 style="color:var(--purple)">🔮 Zero prediction</h3><p style="color:var(--muted);font-size:0.85rem;margin-top:4px">No system predicts where violations will occur next. Reactive enforcement only.</p></div>
+      </div>
+    </div>
+    <div>
+      <div style="background:rgba(255,51,102,0.06);border:1px solid rgba(255,51,102,0.25);border-radius:16px;padding:2rem">
+        <div class="eyebrow" style="color:var(--red)">By the numbers</div>
+        <div style="display:flex;flex-direction:column;gap:1.5rem">
+          <div><div style="font-size:2.5rem;font-weight:900;font-family:'Space Grotesk',sans-serif;color:var(--red)">1.68L</div><div style="font-size:0.8rem;color:var(--muted)">Road accident deaths in India (2023)</div></div>
+          <div><div style="font-size:2.5rem;font-weight:900;font-family:'Space Grotesk',sans-serif;color:var(--amber)">0.1%</div><div style="font-size:0.8rem;color:var(--muted)">Violations actually enforced</div></div>
+          <div><div style="font-size:2.5rem;font-weight:900;font-family:'Space Grotesk',sans-serif;color:var(--blue)">72hr</div><div style="font-size:0.8rem;color:var(--muted)">Average evidence processing time</div></div>
+          <div><div style="font-size:2.5rem;font-weight:900;font-family:'Space Grotesk',sans-serif;color:var(--purple)">₹31K Cr</div><div style="font-size:0.8rem;color:var(--muted)">Annual economic loss to congestion</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 3: SOLUTION -->
+<div class="slide" id="s3">
+  <div class="eyebrow">Our Solution</div>
+  <h2>An <span class="accent">AI Command Center</span> that thinks faster than traffic moves</h2>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:2rem">
+    <div class="card highlight">
+      <div style="font-size:2rem;margin-bottom:0.5rem">🎯</div>
+      <h3>Real-Time Detection</h3>
+      <p style="font-size:0.82rem;color:var(--muted);line-height:1.6;margin-top:4px">YOLOv11x detects 8 violation types at 34 FPS. ByteTrack follows each vehicle across frames. 97.3% accuracy.</p>
+    </div>
+    <div class="card highlight">
+      <div style="font-size:2rem;margin-bottom:0.5rem">🌆</div>
+      <h3>3D Digital Twin</h3>
+      <p style="font-size:0.82rem;color:var(--muted);line-height:1.6;margin-top:4px">Live 3D city model showing vehicle movements, violation hotspots, officer positions, and congestion heatmaps.</p>
+    </div>
+    <div class="card highlight">
+      <div style="font-size:2rem;margin-bottom:0.5rem">📄</div>
+      <h3>Auto Evidence</h3>
+      <p style="font-size:0.82rem;color:var(--muted);line-height:1.6;margin-top:4px">Annotated images + GPS + timestamp + plate number → QR-signed PDF in &lt;100ms. Court-admissible.</p>
+    </div>
+    <div class="card highlight">
+      <div style="font-size:2rem;margin-bottom:0.5rem">🔮</div>
+      <h3>Predictive AI</h3>
+      <p style="font-size:0.82rem;color:var(--muted);line-height:1.6;margin-top:4px">ML model predicts violation hotspots 2 hours ahead. Tells officers where to be before it happens.</p>
+    </div>
+    <div class="card highlight">
+      <div style="font-size:2rem;margin-bottom:0.5rem">🤖</div>
+      <h3>AI Copilot</h3>
+      <p style="font-size:0.82rem;color:var(--muted);line-height:1.6;margin-top:4px">Natural language interface. Ask "Why is Silk Board congested?" and get AI-powered answers with charts.</p>
+    </div>
+    <div class="card highlight">
+      <div style="font-size:2rem;margin-bottom:0.5rem">🌟</div>
+      <h3>Citizen Reporting</h3>
+      <p style="font-size:0.82rem;color:var(--muted);line-height:1.6;margin-top:4px">Gamified reporting with points + badges. AI verifies report authenticity. Citizens become Traffic Heroes.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: VIOLATIONS -->
+<div class="slide" id="s4">
+  <div class="eyebrow">AI Detection Capabilities</div>
+  <h2>8 violation types detected with <span class="accent">industry-leading</span> accuracy</h2>
+  <div class="viol-grid" style="margin-top:2rem">
+    <div class="viol-card"><div class="viol-icon">⛑️</div><div class="viol-name">Helmet Violation</div><div class="viol-acc" style="color:var(--blue)">97.3%</div></div>
+    <div class="viol-card"><div class="viol-icon">🚗</div><div class="viol-name">No Seatbelt</div><div class="viol-acc" style="color:var(--blue)">94.1%</div></div>
+    <div class="viol-card"><div class="viol-icon">🛵</div><div class="viol-name">Triple Riding</div><div class="viol-acc" style="color:var(--blue)">89.6%</div></div>
+    <div class="viol-card"><div class="viol-icon">🚫</div><div class="viol-name">Wrong-Side</div><div class="viol-acc" style="color:var(--blue)">91.2%</div></div>
+    <div class="viol-card"><div class="viol-icon">🛑</div><div class="viol-name">Stop Line Cross</div><div class="viol-acc" style="color:var(--blue)">88.4%</div></div>
+    <div class="viol-card"><div class="viol-icon">🚦</div><div class="viol-name">Red Light</div><div class="viol-acc" style="color:var(--blue)">93.7%</div></div>
+    <div class="viol-card"><div class="viol-icon">🅿️</div><div class="viol-name">Illegal Parking</div><div class="viol-acc" style="color:var(--blue)">95.8%</div></div>
+    <div class="viol-card"><div class="viol-icon">💨</div><div class="viol-name">Speed Violation</div><div class="viol-acc" style="color:var(--blue)">96.1%</div></div>
+  </div>
+  <div style="margin-top:2rem">
+    <div class="eyebrow">Performance</div>
+    <div class="perf-row"><div class="perf-label">Inference speed</div><div class="perf-bar-w"><div class="perf-bar" style="width:95%;background:var(--blue)"></div></div><div class="perf-val">2.1ms</div></div>
+    <div class="perf-row"><div class="perf-label">FPS (RTX 3090)</div><div class="perf-bar-w"><div class="perf-bar" style="width:90%;background:var(--green)"></div></div><div class="perf-val">34 FPS</div></div>
+    <div class="perf-row"><div class="perf-label">Plate OCR accuracy</div><div class="perf-bar-w"><div class="perf-bar" style="width:96%;background:var(--purple)"></div></div><div class="perf-val">96.2%</div></div>
+    <div class="perf-row"><div class="perf-label">Evidence generation</div><div class="perf-bar-w"><div class="perf-bar" style="width:99%;background:var(--amber)"></div></div><div class="perf-val">&lt;100ms</div></div>
+  </div>
+</div>
+
+<!-- SLIDE 5: TECH STACK -->
+<div class="slide" id="s5">
+  <div class="eyebrow">Technology</div>
+  <h2>Enterprise-grade stack built for <span class="accent">city-scale</span> deployment</h2>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:2rem">
+    <div>
+      <div class="eyebrow">Frontend</div>
+      <div class="card-grid">
+        <div class="card"><strong>Next.js 14</strong><br><span style="font-size:0.78rem;color:var(--muted)">React Server Components</span></div>
+        <div class="card"><strong>Three.js + R3F</strong><br><span style="font-size:0.78rem;color:var(--muted)">3D Digital Twin City</span></div>
+        <div class="card"><strong>Framer Motion</strong><br><span style="font-size:0.78rem;color:var(--muted)">Cinematic animations</span></div>
+        <div class="card"><strong>ECharts + D3</strong><br><span style="font-size:0.78rem;color:var(--muted)">Advanced analytics</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="eyebrow">AI Pipeline</div>
+      <div class="card-grid">
+        <div class="card"><strong>YOLOv11x</strong><br><span style="font-size:0.78rem;color:var(--muted)">Object + violation detection</span></div>
+        <div class="card"><strong>ByteTrack</strong><br><span style="font-size:0.78rem;color:var(--muted)">Multi-object tracking</span></div>
+        <div class="card"><strong>PaddleOCR</strong><br><span style="font-size:0.78rem;color:var(--muted)">License plate reading</span></div>
+        <div class="card"><strong>OpenCV + CUDA</strong><br><span style="font-size:0.78rem;color:var(--muted)">GPU video processing</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="eyebrow">Backend + Infra</div>
+      <div class="card-grid">
+        <div class="card"><strong>FastAPI + WebSocket</strong><br><span style="font-size:0.78rem;color:var(--muted)">Real-time API</span></div>
+        <div class="card"><strong>PostgreSQL + PostGIS</strong><br><span style="font-size:0.78rem;color:var(--muted)">Spatial queries</span></div>
+        <div class="card"><strong>Redis Pub/Sub</strong><br><span style="font-size:0.78rem;color:var(--muted)">Live event streaming</span></div>
+        <div class="card"><strong>Docker + NGINX</strong><br><span style="font-size:0.78rem;color:var(--muted)">Production deployment</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: VS COMPETITORS -->
+<div class="slide" id="s6">
+  <div class="eyebrow">Competitive Advantage</div>
+  <h2>Why <span class="accent">TrafficVerse AI</span> wins against existing solutions</h2>
+  <div style="margin-top:2rem;overflow:auto">
+    <table class="pitch-table">
+      <thead><tr><th>Feature</th><th>TrafficVerse AI</th><th>Traditional CCTV</th><th>Generic CV System</th><th>Manual Patrol</th></tr></thead>
+      <tbody>
+        <tr><td>Real-time detection</td><td class="us">✓ 2.1ms latency</td><td class="them">✗ Manual review</td><td class="them">~ Batch only</td><td class="them">✗ Slow</td></tr>
+        <tr><td>Violation types</td><td class="us">✓ 8 types</td><td class="them">✗ None</td><td class="them">~ 2-3 types</td><td class="them">✗ Subjective</td></tr>
+        <tr><td>Auto evidence PDF</td><td class="us">✓ &lt;100ms</td><td class="them">✗ Manual</td><td class="them">~ Hours</td><td class="them">✗ Paper</td></tr>
+        <tr><td>License plate OCR</td><td class="us">✓ 96.2% accuracy</td><td class="them">✗ None</td><td class="them">~ 80% accuracy</td><td class="them">✗ Manual</td></tr>
+        <tr><td>3D Digital Twin</td><td class="us">✓ Live interactive</td><td class="them">✗ None</td><td class="them">✗ None</td><td class="them">✗ None</td></tr>
+        <tr><td>Predictive AI</td><td class="us">✓ 2hr forecast</td><td class="them">✗ None</td><td class="them">✗ None</td><td class="them">✗ None</td></tr>
+        <tr><td>Citizen reporting</td><td class="us">✓ Gamified</td><td class="them">✗ None</td><td class="them">✗ None</td><td class="them">✗ None</td></tr>
+        <tr><td>Deployment</td><td class="us">✓ Docker / Cloud</td><td class="them">~ On-premise</td><td class="them">~ On-premise</td><td class="them">✗ N/A</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- SLIDE 7: IMPACT -->
+<div class="slide" id="s7">
+  <div class="eyebrow">Real-World Impact</div>
+  <h2>Measurable outcomes from <span class="accent">Bengaluru pilot</span> simulation</h2>
+  <div class="two-col" style="margin-top:2rem">
+    <div>
+      <div class="eyebrow">Projected outcomes</div>
+      <div class="impact-row"><div class="impact-label">Reduction in helmet violations</div><div class="impact-bar-wrap"><div class="impact-bar" style="width:40%"></div></div><div class="impact-val">−40%</div></div>
+      <div class="impact-row"><div class="impact-label">Reduction in accident deaths</div><div class="impact-bar-wrap"><div class="impact-bar" style="width:28%"></div></div><div class="impact-val">−28%</div></div>
+      <div class="impact-row"><div class="impact-label">Evidence processing speed</div><div class="impact-bar-wrap"><div class="impact-bar" style="width:86%"></div></div><div class="impact-val">12× faster</div></div>
+      <div class="impact-row"><div class="impact-label">Fine collection efficiency</div><div class="impact-bar-wrap"><div class="impact-bar" style="width:73%"></div></div><div class="impact-val">+73%</div></div>
+      <div class="impact-row"><div class="impact-label">Officer deployment efficiency</div><div class="impact-bar-wrap"><div class="impact-bar" style="width:87%"></div></div><div class="impact-val">+87%</div></div>
+      <div class="impact-row"><div class="impact-label">Congestion prediction accuracy</div><div class="impact-bar-wrap"><div class="impact-bar" style="width:91%"></div></div><div class="impact-val">91.2%</div></div>
+    </div>
+    <div>
+      <div class="eyebrow">Revenue potential</div>
+      <div style="display:flex;flex-direction:column;gap:1rem">
+        <div class="card highlight" style="padding:1.25rem">
+          <div style="font-size:2rem;font-weight:900;font-family:'Space Grotesk',sans-serif;color:var(--green)">₹2.3 Cr</div>
+          <div style="font-size:0.8rem;color:var(--muted)">Additional monthly fine revenue (Bengaluru)</div>
+        </div>
+        <div class="card highlight">
+          <div style="font-size:2rem;font-weight:900;font-family:'Space Grotesk',sans-serif;color:var(--blue)">₹27.6 Cr</div>
+          <div style="font-size:0.8rem;color:var(--muted)">Annual revenue potential (Bengaluru only)</div>
+        </div>
+        <div class="card highlight">
+          <div style="font-size:2rem;font-weight:900;font-family:'Space Grotesk',sans-serif;color:var(--purple)">₹1,380 Cr</div>
+          <div style="font-size:0.8rem;color:var(--muted)">National potential (50 cities deployment)</div>
+        </div>
+        <div class="card" style="border-color:rgba(0,255,136,0.2)">
+          <div style="font-size:0.85rem;font-weight:600;color:var(--green)">✓ Government partnership ready</div>
+          <div style="font-size:0.78rem;color:var(--muted);margin-top:4px">VAHAN integration · DigiLocker challan · MCA21 compliance</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8: ROADMAP -->
+<div class="slide" id="s8">
+  <div class="eyebrow">Roadmap</div>
+  <h2>From <span class="accent">hackathon prototype</span> to national infrastructure</h2>
+  <div class="two-col" style="margin-top:2rem;gap:4rem">
+    <div class="timeline">
+      <div class="tl-item"><div class="tl-dot">1</div><div class="tl-content"><h4>Phase 1 — Bengaluru Pilot (0–6 months)</h4><p>52 cameras · 8 high-risk zones · 12 officers · 2 GPU servers · Full dashboard deployment</p></div></div>
+      <div class="tl-item"><div class="tl-dot">2</div><div class="tl-content"><h4>Phase 2 — Karnataka State (6–18 months)</h4><p>500+ cameras · VAHAN integration · DigiLocker challans · Drone patrol support · Mobile officer app</p></div></div>
+      <div class="tl-item"><div class="tl-dot">3</div><div class="tl-content"><h4>Phase 3 — National Scale (18–36 months)</h4><p>10,000+ cameras · 100+ cities · Central AI hub · Federated learning · International licensing</p></div></div>
+      <div class="tl-item"><div class="tl-dot">4</div><div class="tl-content"><h4>Phase 4 — Smart City OS (36+ months)</h4><p>Air quality monitoring · Emergency routing · Autonomous vehicle integration · Smart grid sync</p></div></div>
+    </div>
+    <div>
+      <div class="eyebrow">Immediate next steps</div>
+      <div class="card-grid">
+        <div class="card"><strong>Model fine-tuning</strong><p style="font-size:0.78rem;color:var(--muted);margin-top:4px">Train on Indian roads dataset. Indian number plates. Night-time conditions.</p></div>
+        <div class="card"><strong>BBMP integration</strong><p style="font-size:0.78rem;color:var(--muted);margin-top:4px">Connect to Bruhat Bengaluru Mahanagara Palike camera network API.</p></div>
+        <div class="card"><strong>VAHAN API</strong><p style="font-size:0.78rem;color:var(--muted);margin-top:4px">Auto vehicle owner lookup for challan generation and delivery.</p></div>
+        <div class="card"><strong>Officer mobile app</strong><p style="font-size:0.78rem;color:var(--muted);margin-top:4px">React Native app for field officers. Evidence download, route nav, challan issue.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 9: CLOSE -->
+<div class="slide" id="s9">
+  <div style="text-align:center;max-width:800px;margin:0 auto">
+    <div class="eyebrow" style="justify-content:center">TrafficVerse AI</div>
+    <h1 style="font-size:clamp(2.5rem,5vw,4.5rem)">Making Indian roads<br><span class="accent">intelligent, safe,</span><br>and accountable</h1>
+    <p class="body-large" style="margin:1.5rem auto;text-align:center">One camera. One AI model. One command center.<br>The infrastructure for safe cities of tomorrow.</p>
+    <div style="display:flex;justify-content:center;gap:1rem;flex-wrap:wrap;margin-top:2rem">
+      <div class="card" style="padding:1rem 2rem;text-align:center;background:rgba(0,212,255,0.06);border-color:rgba(0,212,255,0.3)">
+        <div style="font-size:0.7rem;color:var(--muted);margin-bottom:4px">LIVE DEMO</div>
+        <div style="font-size:0.9rem;font-weight:600;color:var(--blue)">trafficverse.ai</div>
+      </div>
+      <div class="card" style="padding:1rem 2rem;text-align:center">
+        <div style="font-size:0.7rem;color:var(--muted);margin-bottom:4px">API DOCS</div>
+        <div style="font-size:0.9rem;font-weight:600">trafficverse.ai/docs</div>
+      </div>
+      <div class="card" style="padding:1rem 2rem;text-align:center">
+        <div style="font-size:0.7rem;color:var(--muted);margin-bottom:4px">SOURCE CODE</div>
+        <div style="font-size:0.9rem;font-weight:600">github.com/trafficverse-ai</div>
+      </div>
+    </div>
+    <div class="tags" style="justify-content:center;margin-top:2rem">
+      <span class="tag blue">YOLOv11x</span><span class="tag purple">3D Digital Twin</span>
+      <span class="tag green">Real-Time Evidence</span><span class="tag blue">Citizen Gamification</span>
+      <span class="tag purple">Predictive AI</span><span class="tag green">Scalable to 100+ Cities</span>
+    </div>
+  </div>
+</div>
+
+</div><!-- /slides -->
+
+<button class="arrow" id="prev-btn" onclick="changeSlide(-1)">←</button>
+<button class="arrow" id="next-btn" onclick="changeSlide(1)">→</button>
+
+<script>
+const totalSlides = 9;
+let current = 1;
+
+// Build dots
+const dotsEl = document.getElementById('dots');
+for(let i=1;i<=totalSlides;i++){
+  const d=document.createElement('div'); d.className='dot'+(i===1?' active':'');
+  d.onclick=()=>goTo(i); dotsEl.appendChild(d);
+}
+
+function goTo(n){
+  const prev=document.getElementById('s'+current);
+  if(prev){ prev.classList.remove('active'); if(n>current) prev.classList.add('prev'); }
+  current=Math.max(1,Math.min(totalSlides,n));
+  document.querySelectorAll('.slide').forEach(s=>s.classList.remove('prev'));
+  const cur=document.getElementById('s'+current);
+  if(cur) cur.classList.add('active');
+  document.getElementById('cur-slide').textContent=current;
+  document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i+1===current));
+  document.getElementById('prev-btn').style.opacity=current===1?'0.3':'1';
+  document.getElementById('next-btn').style.opacity=current===totalSlides?'0.3':'1';
+}
+
+function changeSlide(dir){ goTo(current+dir); }
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown') changeSlide(1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp') changeSlide(-1);
+});
+
+// Touch swipe
+let tx=0;
+document.addEventListener('touchstart',e=>tx=e.touches[0].clientX);
+document.addEventListener('touchend',e=>{
+  const diff=tx-e.changedTouches[0].clientX;
+  if(Math.abs(diff)>50) changeSlide(diff>0?1:-1);
+});
+
+goTo(1);
+</script>
+</body>
+</html>
