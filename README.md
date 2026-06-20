@@ -87,7 +87,7 @@ git clone https://github.com/trafficverse-ai/trafficverse.git
 cd trafficverse
 
 # No installation required — open directly in browser
-open trafficverse_v2.html
+open index.html
 
 # Or serve locally
 npx serve . -p 3000
