@@ -99,7 +99,7 @@ open http://localhost:3000/trafficverse_v2.html
 ## Project Structure
 
 trafficverse/
-├── trafficverse_v2.html          # Main platform (start here)
+├── index.html          # Main platform (start here)
 ├── trafficverse_replay.html      # Violation Replay Engine
 ├── trafficverse_pitch.html       # Pitch Deck (9 slides)
 ├── trafficverse_architecture.html # System Architecture Diagram
